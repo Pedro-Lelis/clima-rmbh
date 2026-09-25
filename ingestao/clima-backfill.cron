@@ -8,4 +8,4 @@
 # (status 'parcial' em etl_execucao, saida 0 - nao e falha). A execucao seguinte
 # retoma pelo etl_backfill_ano. Quando tudo estiver carregado, as rodadas viram
 # no-op: todos os anos aparecem como "ja carregado, pulando".
-0 */6 * * * cd /home/pedro/clima-ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill >> /home/pedro/clima-ingestao/backfill.log 2>&1
+0 */6 * * * cd /home/pedro/clima/ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill >> /home/pedro/clima/ingestao/backfill.log 2>&1
