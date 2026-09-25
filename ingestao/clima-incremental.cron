@@ -1,0 +1,11 @@
+# Coleta incremental de hora em hora, no minuto 10.
+# Instalar na VPS com:  crontab -e
+#
+# Usa o Python do virtualenv (o Ubuntu 24.04 nao permite instalar pacotes no
+# Python do sistema - PEP 668). Caminho absoluto porque o cron nao carrega o
+# ambiente da sua sessao.
+#
+# past_days=7 faz cada execucao reescrever a ultima semana: a previsao vai
+# sendo corrigida pelo realizado a cada rodada do modelo. Como a carga e
+# idempotente (MERGE por chave), repetir e barato e seguro.
+10 * * * * cd /home/pedro/clima-ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py incremental >> /home/pedro/clima-ingestao/ingestao.log 2>&1

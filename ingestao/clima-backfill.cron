@@ -1,0 +1,11 @@
+# Backfill historico, a cada 6 horas, ate completar 1940 -> hoje.
+#
+# Por que agendado e nao de uma vez: cada ano de backfill (6 municipios,
+# ~56 variaveis, 365 dias) vale ~876 chamadas na cota da Open-Meteo, e o plano
+# gratuito da 10.000/dia. Cabem ~11 anos por dia; os 86 anos levam ~8 dias.
+#
+# Cada execucao avanca o que a cota permitir e para limpa quando recebe 429
+# (status 'parcial' em etl_execucao, saida 0 - nao e falha). A execucao seguinte
+# retoma pelo etl_backfill_ano. Quando tudo estiver carregado, as rodadas viram
+# no-op: todos os anos aparecem como "ja carregado, pulando".
+0 */6 * * * cd /home/pedro/clima-ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill >> /home/pedro/clima-ingestao/backfill.log 2>&1
