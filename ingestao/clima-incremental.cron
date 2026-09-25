@@ -8,4 +8,4 @@
 # past_days=7 faz cada execucao reescrever a ultima semana: a previsao vai
 # sendo corrigida pelo realizado a cada rodada do modelo. Como a carga e
 # idempotente (MERGE por chave), repetir e barato e seguro.
-10 * * * * cd /home/pedro/clima/ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py incremental >> /home/pedro/clima/ingestao.log 2>&1
+10 * * * * cd /home/pedro/clima/ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py incremental >> /home/pedro/clima/ingestao/ingestao.log 2>&1
