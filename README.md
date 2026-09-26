@@ -1,19 +1,24 @@
 # Histórico de Clima Dinâmico (RMBH)
 
-Banco analítico em **SQL Server 2025 Developer** (VPS Contabo, Ubuntu) alimentado
-continuamente pela **API Open-Meteo**, com painel final em **Power BI**.
-Projeto de portfólio: praticar SQL Server (DBA) + BI sobre uma fonte real e viva.
+Banco analítico em **SQL Server 2025 Developer** (VPS Contabo, Ubuntu 24.04)
+alimentado continuamente pela **API Open-Meteo**, com painel final em **Power BI**.
+Projeto de portfólio de dados ponta a ponta: ingestão de uma fonte real e viva,
+modelagem dimensional, administração do banco, qualidade de dados e BI.
 
 ## Estado
 
 | Etapa | Situação |
 |---|---|
-| VPS provisionada e endurecida (SSH por chave, `ufw`) | concluída |
-| SQL Server instalado, `max server memory` = 6 GB, porta 1433 | concluída |
+| VPS Contabo: SSH só por chave, firewall `ufw` | concluída |
+| Acesso ao banco pela rede privada Tailscale (porta 1433 fechada para a internet) | concluída |
+| SQL Server 2025 Developer, `max server memory` = 6 GB | concluída |
 | Modelagem: star schema, 2 dimensões + 4 fatos | concluída |
-| **DDL completo (`sql/`)** | **escrito, falta aplicar no servidor** |
-| **Ingestão: backfill + incremental (`ingestao/`)** | **escrita, falta rodar na VPS** |
-| Painel Power BI | pendente |
+| Backfill histórico 1940 → hoje (~4,5 milhões de linhas horárias, ~190 mil diárias) | concluído |
+| Coleta contínua: previsão de hora em hora, histórico a cada 6 h | em operação |
+| Deploy por Git: a VPS roda um clone deste repositório | concluído |
+| Checagens de qualidade de dados | em andamento |
+| Orquestração com Airflow | planejada |
+| Painel Power BI | planejado |
 
 ## Modelo de dados
 
@@ -59,10 +64,10 @@ Quatro fatos, não uma: **origem** (reanálise histórica × modelo de previsão
   período atualiza a linha em vez de duplicá-la.
 * Índice extra `(data_id, municipio_id)` cobre o filtro típico do painel
   ("um período, todos os municípios"), oposto à ordem da PK.
-* **Fuso**: a API é chamada com `timezone=America/Sao_Paulo`, que na Open-Meteo
-  equivale a **UTC-3 fixo** — verificado em 2018-11-04, virada do antigo horário
-  de verão: a série voltou com 24 horas, sem hora repetida nem faltante. Por isso
-  `(data_id, hora)` é chave segura.
+* **Fuso dos dados**: a API é chamada com `timezone=America/Sao_Paulo`, que na
+  Open-Meteo equivale a **UTC-3 fixo** — verificado em 2018-11-04, virada do
+  antigo horário de verão: a série voltou com 24 horas, sem hora repetida nem
+  faltante. Por isso `(data_id, hora)` é chave segura.
 * `eh_previsao` nas tabelas de clima atual separa o que já foi observado do que
   ainda é projeção — permite medir, depois, o **erro da previsão** contra o
   realizado. É um gancho de análise que sai de graça do desenho.
@@ -71,8 +76,9 @@ Quatro fatos, não uma: **origem** (reanálise histórica × modelo de previsão
 
 Ibirité, Belo Horizonte, Contagem, Betim, Nova Lima e Sabará. Códigos IBGE
 conferidos na API de localidades do IBGE; coordenadas e altitude na API de
-geocoding da própria Open-Meteo. Expansível: basta inserir linhas em
-`dim_municipio` — nada mais no schema depende da lista.
+geocoding da própria Open-Meteo. Os seis caem em pontos de grade distintos da
+reanálise, então cada município tem série própria. Expansível: basta inserir
+linhas em `dim_municipio` — nada mais no schema depende da lista.
 
 ## Ingestão
 
@@ -90,8 +96,14 @@ python ingestao.py incremental     # /v1/forecast, últimos 7 dias + 16 à frent
 * **Backfill retomável.** `etl_backfill_ano` registra município × ano concluído;
   uma queda no meio dos 86 anos é retomada de onde parou. `etl_execucao` guarda
   o log de cada rodada, com status e contagem de linhas.
-* **Resiliente ao limite da API.** 429 e 5xx entram em espera exponencial
-  (5s → 15s → 45s → 135s); erro de parâmetro falha na hora, sem insistir.
+* **Ano corrente sempre aberto.** O ano em curso nunca é marcado como concluído
+  (fica `parcial`): cada rodada pede à API só os dias novos que o ERA5 publicou,
+  com 3 dias de sobreposição para absorver revisões da reanálise.
+* **Três tipos de falha, três respostas.** Falha de rede e erro 5xx são
+  temporários: espera exponencial e nova tentativa. Erro 429 é cota esgotada:
+  espera 65 s uma vez (resolve o limite por minuto) e, se persistir, a execução
+  para limpa com status `parcial`. Qualquer outro 4xx é erro de parâmetro e
+  falha na hora, sem insistir.
 * **De-para explícito e verificado.** As colunas estão em português e as
   variáveis da API em inglês; `nomes.py` liga os dois lados, e a ingestão carrega
   o que tiver tradução *e* coluna correspondente.
@@ -99,68 +111,84 @@ python ingestao.py incremental     # /v1/forecast, últimos 7 dias + 16 à frent
   as amostras de payload em `docs/`, e acusa três defeitos distintos: variável
   sem tradução, tradução sem coluna, e coluna órfã.
 
-### O que esperar do backfill (medido)
+### O que custou o backfill (medido)
 
 Uma chamada = 1 ano × 6 municípios × 36 variáveis horárias → 10 MB de JSON,
-52.560 linhas horárias e 2.190 diárias.
+52.560 linhas horárias e 2.190 diárias, em **11,2 s** rodando na VPS (chamada da
+API + staging + `MERGE`).
 
-Medido **rodando na VPS**: **11,2 s por ano**, ponta a ponta (chamada da API +
-carga na staging + `MERGE`). Da máquina local no Brasil a mesma chamada leva
-~90 s, quase tudo latência — a VPS está na Europa, ao lado dos servidores da
-Open-Meteo.
+**O limite não foi tempo, foi cota.** Na Open-Meteo uma requisição vale 1
+chamada como base, mas conta como várias quando passa de 10 variáveis ou 2
+semanas de período. Cada ano de backfill custou **≈ 876 chamadas**; com o plano
+gratuito (10.000/dia) couberam ~11 anos por dia, e os 86 anos levaram **~8 dias**
+de execuções agendadas, cada uma avançando até a cota acabar e retomando na
+seguinte.
 
-**O que limita o backfill não é tempo, é cota.** Na Open-Meteo uma requisição
-vale 1 chamada como base, mas conta como várias quando passa de 10 variáveis ou
-2 semanas de período. Nossa chamada de 1 ano × 6 municípios × ~56 variáveis vale
-**≈ 876 chamadas**. Com o plano gratuito (600/min, 5.000/hora, 10.000/dia),
-cabem **~11 anos de backfill por dia** — os 86 anos levam **~8 dias**.
+## Acesso e segurança
 
-Por isso o backfill é agendado, não disparado de uma vez: cada execução avança o
-que a cota permitir e para limpa no 429, com status `parcial` em `etl_execucao` e
-saída 0. A execução seguinte retoma pelo `etl_backfill_ano`. Depois que tudo
-estiver carregado, as rodadas viram no-op.
-
-Dados de 1940 vêm completos — inclusive solo e radiação, sem coluna vazia.
+* **Banco fora da internet.** A porta 1433 só aceita conexões pela interface da
+  rede privada [Tailscale](https://tailscale.com) (`ufw allow in on tailscale0`).
+  SSMS e Power BI conectam pelo IP privado da VPS na Tailscale.
+* **SSH só por chave.** O login por senha está desligado em
+  `/etc/ssh/sshd_config.d/00-hardening.conf`. O prefixo `00-` importa: a imagem
+  da Contabo traz um `50-cloud-init.conf` com `PasswordAuthentication yes`, e no
+  sshd vale a primeira ocorrência de cada diretiva — uma edição no arquivo
+  principal era silenciosamente ignorada.
+* **Nenhum segredo no repositório.** A senha do banco vive só no `.env` da VPS
+  (`chmod 600`, fora do Git); o repositório traz apenas `.env.exemplo`.
 
 ## Passo a passo
 
-**1. Aplicar o schema** (SSMS do Windows, conectado a `<IP_DA_VPS>`):
-abra os arquivos de `sql/` na ordem numérica e execute cada um.
-Na VPS, o equivalente é `export SA_PASSWORD='...' && ./deploy.sh`.
-
-**2. Copiar `ingestao/` para a VPS** (do PowerShell, no Windows):
-
-```powershell
-scp -i "$env:USERPROFILE\.ssh\id_ed25519" -r "F:\Projeto-weather-history-db\ingestao" pedro@<IP_DA_VPS>:~/clima-ingestao
-```
-
-**3. Preparar o ambiente na VPS**. O Ubuntu 24.04 recusa `pip install` no Python
-do sistema (PEP 668) — pacote instalado por fora do apt pode quebrar ferramentas
-do próprio SO. O virtualenv isola as dependências do projeto:
+**1. Acesso.** Instale o Tailscale na VPS e na máquina local, com a mesma conta,
+e desative a expiração de chave da VPS no painel. No firewall da VPS:
 
 ```bash
-sudo apt install -y python3-venv unixodbc-dev build-essential && cd ~/clima-ingestao && python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+sudo ufw allow in on tailscale0 to any port 1433 proto tcp
 ```
 
-**4. Configurar credenciais** (a senha do `sa` fica só no `.env`, fora do
-versionamento):
+**2. Schema.** No SSMS, conectado a `<IP_TAILSCALE_DA_VPS>`, execute os arquivos
+de `sql/` em ordem numérica. Na VPS, o equivalente é
+`export SA_PASSWORD='...' && ./sql/deploy.sh`.
+
+**3. Código na VPS.**
 
 ```bash
-cd ~/clima-ingestao && cp .env.exemplo .env && nano .env && chmod 600 .env
+git clone https://github.com/Pedro-Lelis/clima-rmbh.git ~/clima
 ```
 
-**5. Teste curto antes dos 86 anos** — um ano só, ~2 minutos, valida a gravação
-de ponta a ponta antes de disparar a carga longa:
+**4. Ambiente Python.** O Ubuntu 24.04 recusa `pip install` no Python do sistema
+(PEP 668); o virtualenv isola as dependências do projeto:
 
 ```bash
-cd ~/clima-ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill --inicio 2025 --fim 2025
+sudo apt install -y python3-venv unixodbc-dev && cd ~/clima/ingestao && python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 ```
 
-**6. Backfill completo**: instalar `clima-backfill.cron` no `crontab -e`. Roda a
-cada 6 h, avança até a cota acabar e retoma sozinho; ~8 dias para os 86 anos.
-Para acompanhar: `tail -f ~/clima-ingestao/backfill.log`.
+**5. Credenciais.** A senha fica entre aspas simples no `.env`, porque o arquivo
+é lido pelo shell:
 
-**7. Coleta contínua**: instalar `clima-incremental.cron` no `crontab -e`.
+```bash
+cd ~/clima/ingestao && cp .env.exemplo .env && nano .env && chmod 600 .env
+```
+
+**6. Teste curto** — um ano só, valida a gravação de ponta a ponta:
+
+```bash
+cd ~/clima/ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill --inicio 2025 --fim 2025
+```
+
+**7. Agendamento.** Instala os dois crons de uma vez (instalar um sozinho
+apagaria o outro). Os horários seguem o fuso da VPS:
+
+```bash
+cd ~/clima/ingestao && cat clima-backfill.cron clima-incremental.cron | crontab -
+```
+
+**8. Atualizações.** Toda mudança chega pelo Git; se algum `.cron` mudou,
+reinstale o crontab:
+
+```bash
+cd ~/clima && git pull
+```
 
 ## Ressalva sobre os dados
 
@@ -171,7 +199,7 @@ histórica longa e homogênea, e essa distinção deve aparecer no painel.
 ## Estrutura
 
 ```
-sql/        DDL numerado (01..08) + deploy.sh
+sql/        DDL numerado (01..09) + deploy.sh
 ingestao/   open_meteo.py (API) · nomes.py (de-para) · banco.py (staging + MERGE)
             ingestao.py (CLI) · verificar_mapeamento.py · .env.exemplo
             clima-backfill.cron · clima-incremental.cron
