@@ -1,0 +1,17 @@
+[Unit]
+Description=Airflow %i
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+User=pedro
+WorkingDirectory=/home/pedro/airflow
+EnvironmentFile=/home/pedro/airflow/airflow.env
+Environment=PATH=/home/pedro/airflow/.venv/bin:/usr/bin:/bin
+ExecStart=/home/pedro/airflow/.venv/bin/airflow %i
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
