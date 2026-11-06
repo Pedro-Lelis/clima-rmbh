@@ -18,20 +18,26 @@ administração do banco, orquestração, qualidade de dados e BI.
 | Modelagem: star schema, 2 dimensões + 4 fatos | concluída |
 | Backfill histórico 1940 → hoje (~4,5 milhões de linhas horárias, ~190 mil diárias) | concluído |
 | Orquestração com Airflow 3: coleta incremental de hora em hora | em operação |
+| Backup diário com verificação, cópia no Google Drive e restore testado | em operação |
+| Alerta de falha das DAGs pelo Telegram | em operação |
 | Deploy por Git: a VPS roda um clone deste repositório | concluído |
-| Checagens de qualidade de dados | em andamento |
+| Checagens de qualidade: completude de cada carga | em operação |
+| Checagens de qualidade: nulos e faixas de valores | em andamento |
 | Painel Power BI | planejado |
 
 ## Arquitetura
 
 ```
-                 ┌──────────────────────── VPS Ubuntu 24.04 ─────────────────────────┐
+                 ┌───────────────────────── VPS Ubuntu 24.04 ──────────────────────────┐
                  │                                                                     │
  Open-Meteo ─────┼─▶ ingestao.py ──▶ stg_* ──MERGE──▶ fact_* / dim_*   (SQL Server)    │
  /v1/archive     │       ▲                                                             │
  /v1/forecast    │       │ dispara                                                     │
-                 │   Airflow 3 (DAG clima_incremental, de hora em hora)                │
-                 │   cron      (histórico, a cada 6 h)                                 │
+                 │   Airflow 3                                                         │
+                 │     clima_incremental   de hora em hora, + checagem de completude   │
+                 │     manutencao_backup   diária: BACKUP ─▶ VERIFYONLY ─▶ rclone ─────┼──▶ Google Drive
+                 │     falha em qualquer tarefa ───────────────────────────────────────┼──▶ Telegram
+                 │   cron                  histórico, a cada 6 h                       │
                  │       │ estado interno                                              │
                  │       ▼                                                             │
                  │   PostgreSQL (metadados do Airflow)                                 │
@@ -97,7 +103,9 @@ Quatro fatos, não uma: **origem** (reanálise histórica × modelo de previsão
 Ibirité, Belo Horizonte, Contagem, Betim, Nova Lima e Sabará. Códigos IBGE
 conferidos na API de localidades do IBGE; coordenadas e altitude na API de
 geocoding da própria Open-Meteo. Os seis caem em pontos de grade distintos da
-reanálise, então cada município tem série própria. Expansível: basta inserir
+reanálise, então cada município tem série própria — conferido nos dados: nos
+dias com chuva, Belo Horizonte e Betim registram o mesmo total em só 6% deles.
+Expansível: basta inserir
 linhas em `dim_municipio` — nada mais no schema depende da lista.
 
 ## Ingestão
@@ -154,9 +162,67 @@ A coleta incremental é a DAG [`clima_incremental`](airflow/dags/clima_increment
 * 2 novas tentativas com 5 minutos de intervalo, somadas às novas tentativas que
   a própria ingestão já faz contra a API;
 * uma tarefa `BashOperator` que executa a ingestão no ambiente Python dela — o
-  Airflow tem o seu próprio, e as dependências dos dois não se misturam.
+  Airflow tem o seu próprio, e as dependências dos dois não se misturam;
+* uma checagem de completude logo depois da carga (abaixo).
 
-Decisões de infraestrutura:
+### Checagem de completude
+
+A tarefa `checar_completude` é um `SQLCheckOperator` que roda
+[`checar_completude.sql`](airflow/dags/sql/checar_completude.sql) com um login só
+de leitura. Ela conta, para cada município, as linhas gravadas desde o início da
+última execução incremental e exige 552 — (7 dias passados + 16 de previsão) ×
+24 horas. Devolve uma linha só: 1 passa, qualquer outra coisa falha a tarefa.
+
+* **Parte da `dim_municipio`, não da fato**, com `LEFT JOIN` e o filtro de data
+  no `ON`: um município sem nenhuma linha aparece com 0 em vez de sumir do
+  resultado. No `WHERE`, o filtro desfaria o `LEFT JOIN`.
+* **Conta os municípios errados e compara com 0.** Comparar a soma das linhas com
+  um total fixo deixaria um município com horas a menos compensar outro com
+  horas a mais, e quebraria ao entrar um município novo.
+* **Não filtra a execução por `status`.** Quando a cota da API acaba, a ingestão
+  para limpa com status `parcial` e código de saída 0 — para o Airflow, tarefa
+  verde. Filtrar `sucesso` faria a checagem conferir a carga anterior, completa,
+  e o buraco passaria em silêncio.
+* **Sem novas tentativas**: uma checagem que falha não melhora ao repetir.
+* Testada nos três cenários: tudo certo, tudo faltando e **um município errado
+  no meio dos certos** — o caso que uma lógica invertida deixa passar.
+
+### Backup
+
+A DAG [`manutencao_backup`](airflow/dags/manutencao_backup.py) roda todo dia às
+03h30, sem custo extra de hospedagem:
+
+1. `BACKUP DATABASE … WITH INIT, COMPRESSION, CHECKSUM` — 1,1 GB de dados viram
+   um arquivo de ~330 MB;
+2. `RESTORE VERIFYONLY … WITH CHECKSUM` — confere o arquivo antes de confiar nele;
+3. `rclone copy` para uma pasta no Google Drive;
+4. limpeza por idade: 2 cópias na VPS, 7 no Drive.
+
+Cada passo só roda se o anterior der certo — a limpeza nunca apaga cópia antiga
+sem que a nova tenha chegado ao Drive.
+
+* **`INIT`** evita que duas execuções no mesmo dia empilhem dois backups no mesmo
+  arquivo (o `VERIFYONLY` conferiria só o primeiro).
+* **`autocommit` e mensagens consumidas.** O SQL Server não aceita `BACKUP`
+  dentro de transação, e manda o progresso como mensagens que o pyodbc precisa
+  ler até o fim — senão a conexão pode fechar com o backup pela metade.
+* **Restore testado de verdade**: uma cópia baixada do Drive foi restaurada como
+  outro banco e conferida contra o original, contagem a contagem. Backup que
+  nunca foi restaurado é só uma hipótese.
+
+### Alerta de falha
+
+Qualquer tarefa que falhe de vez, depois das novas tentativas, manda uma mensagem
+pelo Telegram ([`comum/alertas.py`](airflow/dags/comum/alertas.py), ligado como
+`on_failure_callback` nas duas DAGs). O envio tem tempo limite e uma segunda
+tentativa, e o log registra só o tipo de erro — a mensagem de erro da biblioteca
+traz a URL, e a URL traz o token do bot.
+
+Limite conhecido: se a VPS ou o scheduler caírem, nenhuma tarefa roda e nenhum
+alerta sai. Cobrir esse caso exige um monitor externo, que estranhe a *ausência*
+de sinal.
+
+### Infraestrutura
 
 * **Metadados no PostgreSQL**, não no SQL Server: desde o Airflow 2.9 o SQL Server
   não é suportado como banco de metadados (as DAGs continuam lendo e gravando nele
@@ -169,7 +235,14 @@ Decisões de infraestrutura:
   instância que sobe no boot, reinicia em caso de falha e para por inteiro —
   sem deixar processos órfãos.
 * **As DAGs vivem neste repositório** (`DAGS_FOLDER` aponta para o clone na VPS):
-  uma DAG nova chega ao Airflow com `git pull`.
+  uma DAG nova chega ao Airflow com `git pull`. O `.airflowignore` tira a pasta
+  `comum/` (código compartilhado, sem DAG) da varredura.
+* **Conexões e variáveis por ambiente** (`AIRFLOW_CONN_*`, `AIRFLOW_VAR_*` no
+  `airflow.env`), não pela interface: ficam fora do banco de metadados e fora do
+  Git. O driver ODBC vai em `hook_params` na própria tarefa.
+* **Servidor no fuso de Brasília** (`America/Sao_Paulo`), o mesmo dos dados: a
+  imagem da VPS veio no horário europeu, e a ingestão comparava horas de
+  Brasília com o relógio da máquina para decidir o que era previsão.
 
 O backfill do histórico ainda roda pelo cron, a cada 6 horas; a próxima DAG o
 substitui.
@@ -188,6 +261,13 @@ substitui.
 * **Nenhum segredo no repositório.** As senhas vivem só nos arquivos de ambiente
   da VPS (`.env` da ingestão e `airflow.env`, ambos `chmod 600` e fora do Git); o
   repositório traz apenas `.env.exemplo`.
+* **Um login por função, com o mínimo de permissão.** O Airflow não usa o `sa`:
+  a checagem roda com um login que só lê (`db_datareader`), e o backup com um
+  que só faz backup (`db_backupoperator`, mais `CREATE ANY DATABASE`, exigido
+  pelo `RESTORE VERIFYONLY`).
+* **Acesso restrito ao Drive.** O rclone usa um app OAuth próprio, com o escopo
+  `drive.file`: ele enxerga só os arquivos que ele mesmo criou, não o Drive
+  inteiro.
 * **Login do Airflow.** O Airflow 3 usa por padrão o `SimpleAuthManager`, que
   guarda a senha do administrador em texto num arquivo local (`chmod 600`). É
   aceitável aqui porque a interface só é alcançável pela rede privada; num
@@ -233,7 +313,12 @@ cd ~/clima/ingestao && cp .env.exemplo .env && nano .env && chmod 600 .env
 cd ~/clima/ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill --inicio 2025 --fim 2025
 ```
 
-**7. Histórico agendado.** O crontab segue o fuso da VPS:
+**7. Histórico agendado.** O crontab segue o fuso da VPS — acerte-o antes, para
+o mesmo dos dados:
+
+```bash
+sudo timedatectl set-timezone America/Sao_Paulo
+```
 
 ```bash
 crontab ~/clima/ingestao/clima-backfill.cron
@@ -256,6 +341,12 @@ versões testadas juntas):
 mkdir -p ~/airflow && cd ~/airflow && python3 -m venv .venv && ./.venv/bin/pip install "apache-airflow[postgres]==3.3.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.12.txt"
 ```
 
+O provider ODBC, para as tarefas que falam direto com o SQL Server:
+
+```bash
+~/airflow/.venv/bin/pip install apache-airflow-providers-odbc --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.12.txt"
+```
+
 Configuração em `~/airflow/airflow.env` (`chmod 600`). A senha do PostgreSQL vai
 **codificada para URL** (`@` vira `%40`, e assim por diante):
 
@@ -267,7 +358,15 @@ AIRFLOW__CORE__LOAD_EXAMPLES=False
 AIRFLOW__CORE__DAGS_FOLDER=/home/<usuario>/clima/airflow/dags
 AIRFLOW__CORE__DEFAULT_TIMEZONE=America/Sao_Paulo
 AIRFLOW__DATABASE__SQL_ALCHEMY_CONN='postgresql+psycopg2://airflow:<SENHA_CODIFICADA>@localhost:5432/airflow_meta'
+AIRFLOW_CONN_CLIMA_SQLSERVER='{"conn_type":"odbc","host":"localhost","schema":"ClimaRMBH","login":"<LOGIN_LEITURA>","password":"<SENHA>","extra":{"TrustServerCertificate":"yes"}}'
+AIRFLOW_CONN_CLIMA_SQLSERVER_BACKUP='{"conn_type":"odbc","host":"localhost","schema":"ClimaRMBH","login":"<LOGIN_BACKUP>","password":"<SENHA>","extra":{"TrustServerCertificate":"yes"}}'
+AIRFLOW_VAR_TELEGRAM_TOKEN='<TOKEN_DO_BOT>'
+AIRFLOW_VAR_TELEGRAM_CHAT_ID='<CHAT_ID>'
 ```
+
+O token vem do @BotFather; o `chat_id`, de `getUpdates` na API do bot, depois de
+mandar uma mensagem a ele. Com `token` no nome, o Airflow esconde o valor nos
+logs.
 
 Tabelas do Airflow e serviços:
 
@@ -282,7 +381,20 @@ sudo cp ~/clima/airflow/systemd/airflow@.service /etc/systemd/system/ && sudo sy
 Toda DAG nova nasce pausada: dispare uma execução manual, confira o log da tarefa
 e só então despause.
 
-**9. Atualizações.** Toda mudança chega pelo Git:
+**9. Backup.** Pasta do SQL Server com o grupo `mssql` herdado pelos arquivos
+novos (`2770`), e o usuário do Airflow no grupo, para a limpeza conseguir apagar
+cópias antigas — os serviços do Airflow precisam ser reiniciados para ganhar o
+grupo:
+
+```bash
+sudo mkdir -p /var/opt/mssql/backup && sudo chown mssql:mssql /var/opt/mssql/backup && sudo chmod 2770 /var/opt/mssql/backup && sudo usermod -aG mssql <usuario>
+```
+
+Depois, instale o rclone e crie com `rclone config` um remote `clima_drive` para
+o Google Drive, usando um client ID próprio (o compartilhado do rclone esbarra
+em cota) e o escopo `drive.file`.
+
+**10. Atualizações.** Toda mudança chega pelo Git:
 
 ```bash
 cd ~/clima && git pull
@@ -305,6 +417,14 @@ Se o arquivo do systemd mudou, copie de novo e rode `daemon-reload`; se o
 * **Processos de um terminal não sobrevivem ao terminal** — o `airflow standalone`
   deixou 32 workers órfãos ao fechar a sessão SSH, e eles ignoravam `SIGTERM`.
   Serviços do systemd resolvem isso por construção.
+* **O fuso do servidor faz parte dos dados** — com a VPS no horário europeu, a
+  ingestão marcava como previsão horas que já tinham passado em Brasília.
+* **Checagem precisa ser testada falhando** — e não só com tudo certo ou tudo
+  errado: uma versão com a lógica invertida passava nesses dois testes e
+  aprovava a carga com um município faltando.
+* **Credencial compartilhada tem cota compartilhada** — o client ID padrão do
+  rclone devolvia erro de cota no Google; com um app OAuth próprio, o envio
+  passou.
 * **Commit publicado não se edita** — corrige-se com um commit novo.
 
 ## Ressalva sobre os dados
@@ -315,9 +435,10 @@ histórica longa e homogênea, e essa distinção deve aparecer no painel.
 
 ## Roteiro
 
-**Para fechar a v1:** checagens de qualidade como tarefa da DAG · DAG do
-histórico (aposenta o cron) · backup com restore testado · dicionário de dados ·
-painel Power BI.
+**Para fechar a v1:** checagens de nulos e de faixas de valores · DAG do
+histórico (aposenta o cron) · dicionário de dados · painel Power BI.
+
+**Operação:** monitor externo, para avisar se a própria VPS parar.
 
 **Fase 2:** busca de "dias análogos" com o tipo `VECTOR` do SQL Server 2025 · API
 para servir os dados, em container Docker · avaliação do Metabase como
@@ -331,6 +452,8 @@ sql/        DDL numerado (01..09) + deploy.sh
 ingestao/   open_meteo.py (API) · nomes.py (de-para) · banco.py (staging + MERGE)
             ingestao.py (CLI) · verificar_mapeamento.py · .env.exemplo
             clima-backfill.cron
-airflow/    dags/clima_incremental.py · systemd/airflow@.service
+airflow/    dags/clima_incremental.py · dags/manutencao_backup.py
+            dags/sql/checar_completude.sql · dags/comum/alertas.py
+            systemd/airflow@.service
 docs/       amostras de payload da API
 ```
