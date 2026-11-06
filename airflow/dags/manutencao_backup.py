@@ -2,6 +2,7 @@ import pendulum
 from airflow.sdk import DAG
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.standard.operators.bash import BashOperator
+from comum.alertas import avisar_falha
 
 def esvaziar_mensagens_sql(cursor):
     """
@@ -20,11 +21,16 @@ Faz o backup diário do banco de dados e valida a integridade (CHECKSUM).
 Em seguida, sobe para o Google Drive e limpa os arquivos antigos da VPS e da nuvem.
 """
 
+argumentos_padrao = {
+    "on_failure_callback": avisar_falha,
+}
+
 with DAG(
     dag_id="manutencao_backup",
     schedule="30 3 * * *",
     start_date=pendulum.datetime(2026, 10, 25, tz="America/Sao_Paulo"),
     catchup=False,
+    default_args=argumentos_padrao,
     max_active_runs=1,
     tags=["manutencao", "sqlserver"],
     doc_md=documentacao_dag,

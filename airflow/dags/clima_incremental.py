@@ -2,10 +2,12 @@ import pendulum
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.providers.common.sql.operators.sql import SQLCheckOperator
+from comum.alertas import avisar_falha
 
 argumentos_padrao = {
     "retries": 2,
     "retry_delay": pendulum.duration(minutes=5),
+    "on_failure_callback": avisar_falha,
 }
 
 documentacao_dag = """
