@@ -41,4 +41,12 @@ with DAG(
         retries=0,
     )
     
-    carregar >> checar_completude
+    checar_nulos = SQLCheckOperator(
+        task_id="checar_nulos",
+        conn_id="clima_sqlserver",
+        sql="sql/checar_nulos.sql",
+        hook_params={"driver": "ODBC Driver 18 for SQL Server"},
+        retries=0,
+    )
+    
+    carregar >> [checar_completude, checar_nulos]
