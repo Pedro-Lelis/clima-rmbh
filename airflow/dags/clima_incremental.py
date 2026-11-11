@@ -14,7 +14,7 @@ documentacao_dag = """
 ### Ingestão Incremental de Clima (RMBH)
 Coleta contínua de dados da **API Open-Meteo** para 6 municípios.
 Busca os últimos 7 dias e 16 dias à frente, atualizando o **SQL Server** via `MERGE` idempotente.
-Após a carga, confere se vieram as 552 horas (23 dias × 24) de cada município.
+Após a carga, três checagens em paralelo: completude (552 horas por município), nenhuma coluna de medida 100% nula, e valores dentro dos limites físicos e coerentes entre si.
 """
 
 with DAG(
@@ -49,4 +49,12 @@ with DAG(
         retries=0,
     )
     
-    carregar >> [checar_completude, checar_nulos]
+    checar_faixas = SQLCheckOperator(
+        task_id="checar_faixas",
+        conn_id="clima_sqlserver",
+        sql="sql/checar_faixas.sql",
+        hook_params={"driver": "ODBC Driver 18 for SQL Server"},
+        retries=0,
+    )
+    
+    carregar >> [checar_completude, checar_nulos, checar_faixas]
