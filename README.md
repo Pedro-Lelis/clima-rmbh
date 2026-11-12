@@ -21,8 +21,7 @@ administração do banco, orquestração, qualidade de dados e BI.
 | Backup diário com verificação, cópia no Google Drive e restore testado | em operação |
 | Alerta de falha das DAGs pelo Telegram | em operação |
 | Deploy por Git: a VPS roda um clone deste repositório | concluído |
-| Checagens de qualidade: completude de cada carga | em operação |
-| Checagens de qualidade: nulos e faixas de valores | em andamento |
+| Checagens de qualidade: completude, nulos e faixas de valores de cada carga | em operação |
 | Painel Power BI | planejado |
 
 ## Arquitetura
@@ -34,7 +33,7 @@ administração do banco, orquestração, qualidade de dados e BI.
  /v1/archive     │       ▲                                                             │
  /v1/forecast    │       │ dispara                                                     │
                  │   Airflow 3                                                         │
-                 │     clima_incremental   de hora em hora, + checagem de completude   │
+                 │     clima_incremental   de hora em hora, + 3 checagens de qualidade │
                  │     manutencao_backup   diária: BACKUP ─▶ VERIFYONLY ─▶ rclone ─────┼──▶ Google Drive
                  │     falha em qualquer tarefa ───────────────────────────────────────┼──▶ Telegram
                  │   cron                  histórico, a cada 6 h                       │
@@ -163,7 +162,8 @@ A coleta incremental é a DAG [`clima_incremental`](airflow/dags/clima_increment
   a própria ingestão já faz contra a API;
 * uma tarefa `BashOperator` que executa a ingestão no ambiente Python dela — o
   Airflow tem o seu próprio, e as dependências dos dois não se misturam;
-* uma checagem de completude logo depois da carga (abaixo).
+* três checagens de qualidade em paralelo logo depois da carga — completude,
+  nulos e faixas de valores (abaixo).
 
 ### Checagem de completude
 
@@ -186,6 +186,51 @@ de leitura. Ela conta, para cada município, as linhas gravadas desde o início 
 * **Sem novas tentativas**: uma checagem que falha não melhora ao repetir.
 * Testada nos três cenários: tudo certo, tudo faltando e **um município errado
   no meio dos certos** — o caso que uma lógica invertida deixa passar.
+
+As duas checagens seguintes seguem o mesmo padrão: olham só a última carga,
+contam o que está errado e comparam com 0, sem novas tentativas e testadas nos
+mesmos três cenários.
+
+### Checagem de nulos
+
+A tarefa `checar_nulos` roda [`checar_nulos.sql`](airflow/dags/sql/checar_nulos.sql):
+desfaz as 42 colunas de medida em linhas com `CROSS APPLY (VALUES …)` — cada valor
+convertido para `SQL_VARIANT`, já que os tipos diferem — e conta os valores
+preenchidos de cada coluna. Falha se alguma coluna vier **100% nula**.
+
+* **Por que não "nenhum nulo"**: as 9 colunas de solo vêm nulas, legitimamente,
+  nas últimas ~26 horas do horizonte de previsão. Exigir zero nulos daria alarme
+  a toda hora; uma coluna inteira vazia é que indica defeito — campo renomeado na
+  API, de-para quebrado.
+* **Uma passada só pela tabela**, em vez de uma consulta por coluna.
+
+### Checagem de faixas
+
+A tarefa `checar_faixas` roda [`checar_faixas.sql`](airflow/dags/sql/checar_faixas.sql)
+e devolve uma linha com uma coluna por família de regras (16 ao todo). Quando
+falha, o log mostra a linha inteira, e dá para ver qual família quebrou.
+
+* **Limites físicos vêm de recordes mundiais**, não do clima de BH: um valor real
+  nunca passa deles, mas um erro de pipeline passa — temperatura em Kelvin, vento
+  em outra unidade, coluna trocada no de-para. Plausibilidade regional fica fora
+  da DAG, para não virar alarme no primeiro dia extremo.
+* **Coerência entre colunas**: chuva + pancadas + neve = precipitação; radiação
+  direta + difusa = ondas curtas; ponto de orvalho não passa da temperatura; o
+  que chega ao chão não passa do que chega ao topo da atmosfera.
+* **Tolerâncias medidas, não chutadas**: a exploração mostrou que o modelo de
+  previsão chega a dar ponto de orvalho 0,7 °C acima da temperatura, e que as
+  somas divergem por arredondamento na ponta do horizonte.
+
+**Primeiro alarme real (12/11/2026).** A `coerencia_radiacoes` falhou às 00:10,
+01:10 e 02:10, e passou sozinha a partir das 03:10. A staging é zerada a cada
+carga e o `MERGE` sobrescreve a fato, então os valores daquelas horas já não
+existiam para conferir. A investigação foi pelo que restou: na carga seguinte, a
+maior divergência entre direta + difusa e ondas curtas era **0,00 em todos os 23
+dias e nos 6 municípios**. O ruído normal é zero e a tolerância (1 W/m²) tem
+folga total; o erro foi uma inconsistência transitória na própria Open-Meteo,
+corrigida na fonte em ~3 horas. A regra ficou como estava. Se repetir, o próximo
+passo é guardar as linhas que violaram numa tabela de quarentena antes do
+`MERGE` seguinte, para medir o tamanho real do erro.
 
 ### Backup
 
@@ -422,6 +467,12 @@ Se o arquivo do systemd mudou, copie de novo e rode `daemon-reload`; se o
 * **Checagem precisa ser testada falhando** — e não só com tudo certo ou tudo
   errado: uma versão com a lógica invertida passava nesses dois testes e
   aprovava a carga com um município faltando.
+* **Alarme que tocou se investiga antes de mexer na regra** — a checagem de
+  faixas falhou três horas seguidas e depois passou sozinha. Medir a folga
+  mostrou divergência zero nos dados normais: o erro estava na fonte, não na
+  tolerância. Afrouxar a regra só esconderia o próximo.
+* **Checagem que falha deveria guardar a evidência** — com staging zerada e
+  `MERGE` sobrescrevendo, o dado que disparou o alarme some na carga seguinte.
 * **Credencial compartilhada tem cota compartilhada** — o client ID padrão do
   rclone devolvia erro de cota no Google; com um app OAuth próprio, o envio
   passou.
@@ -435,10 +486,11 @@ histórica longa e homogênea, e essa distinção deve aparecer no painel.
 
 ## Roteiro
 
-**Para fechar a v1:** checagens de nulos e de faixas de valores · DAG do
-histórico (aposenta o cron) · dicionário de dados · painel Power BI.
+**Para fechar a v1:** DAG do histórico (aposenta o cron) · dicionário de dados ·
+painel Power BI.
 
-**Operação:** monitor externo, para avisar se a própria VPS parar.
+**Operação:** monitor externo, para avisar se a própria VPS parar · tabela de
+quarentena para as linhas que falharem nas checagens.
 
 **Fase 2:** busca de "dias análogos" com o tipo `VECTOR` do SQL Server 2025 · API
 para servir os dados, em container Docker · avaliação do Metabase como
@@ -453,7 +505,8 @@ ingestao/   open_meteo.py (API) · nomes.py (de-para) · banco.py (staging + MER
             ingestao.py (CLI) · verificar_mapeamento.py · .env.exemplo
             clima-backfill.cron
 airflow/    dags/clima_incremental.py · dags/manutencao_backup.py
-            dags/sql/checar_completude.sql · dags/comum/alertas.py
-            systemd/airflow@.service
+            dags/sql/checar_completude.sql · checar_nulos.sql · checar_faixas.sql
+            dags/comum/alertas.py · systemd/airflow@.service
+analises/   consultas de exploração (SQL dinâmico)
 docs/       amostras de payload da API
 ```
