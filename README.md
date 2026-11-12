@@ -17,11 +17,11 @@ administração do banco, orquestração, qualidade de dados e BI.
 | SQL Server 2025 Developer, `max server memory` = 4 GB | concluída |
 | Modelagem: star schema, 2 dimensões + 4 fatos | concluída |
 | Backfill histórico 1940 → hoje (~4,5 milhões de linhas horárias, ~190 mil diárias) | concluído |
-| Orquestração com Airflow 3: coleta incremental de hora em hora | em operação |
+| Orquestração com Airflow 3: incremental de hora em hora, histórico diário | em operação |
 | Backup diário com verificação, cópia no Google Drive e restore testado | em operação |
 | Alerta de falha das DAGs pelo Telegram | em operação |
 | Deploy por Git: a VPS roda um clone deste repositório | concluído |
-| Checagens de qualidade: completude, nulos e faixas de valores de cada carga | em operação |
+| Checagens de qualidade: completude, nulos, faixas de valores e atualidade | em operação |
 | Painel Power BI | planejado |
 
 ## Arquitetura
@@ -34,9 +34,9 @@ administração do banco, orquestração, qualidade de dados e BI.
  /v1/forecast    │       │ dispara                                                     │
                  │   Airflow 3                                                         │
                  │     clima_incremental   de hora em hora, + 3 checagens de qualidade │
+                 │     clima_historico     diária, ERA5 + checagem de atualidade       │
                  │     manutencao_backup   diária: BACKUP ─▶ VERIFYONLY ─▶ rclone ─────┼──▶ Google Drive
                  │     falha em qualquer tarefa ───────────────────────────────────────┼──▶ Telegram
-                 │   cron                  histórico, a cada 6 h                       │
                  │       │ estado interno                                              │
                  │       ▼                                                             │
                  │   PostgreSQL (metadados do Airflow)                                 │
@@ -153,7 +153,8 @@ seguinte.
 
 ## Orquestração com Airflow
 
-A coleta incremental é a DAG [`clima_incremental`](airflow/dags/clima_incremental.py):
+Duas DAGs de coleta e uma de manutenção. A coleta incremental é a DAG
+[`clima_incremental`](airflow/dags/clima_incremental.py):
 
 * roda no minuto 10 de cada hora, **no horário de Brasília**
   (`DEFAULT_TIMEZONE=America/Sao_Paulo`);
@@ -232,6 +233,40 @@ corrigida na fonte em ~3 horas. A regra ficou como estava. Se repetir, o próxim
 passo é guardar as linhas que violaram numa tabela de quarentena antes do
 `MERGE` seguinte, para medir o tamanho real do erro.
 
+### Histórico
+
+A DAG [`clima_historico`](airflow/dags/clima_historico.py) roda `ingestao.py
+backfill` uma vez por dia, às 04h20 — longe do backup (03h30) e do incremental
+(minuto 10). Ela substituiu o cron que fez a carga de 1940 em diante.
+
+* **Uma vez por dia basta.** O cron rodava a cada 6 horas por causa da cota,
+  durante os 86 anos de backfill. Com o histórico completo, cada execução pula os
+  anos já carregados e busca só a ponta nova do ano corrente — alguns dias, uma
+  fração da cota.
+* **Sem `catchup` por ano.** O progresso já é controlado pela `etl_backfill_ano`;
+  dar ao Airflow um controle paralelo do mesmo estado (uma execução por ano) só
+  criaria duas fontes de verdade para discordar.
+* **Troca sem sobreposição.** O cron e a DAG gravam na mesma staging, e duas
+  cargas simultâneas misturariam as linhas. A ordem foi: conferir que nenhum
+  backfill estava rodando, tirar a linha do crontab, e só então despausar a DAG.
+
+A tarefa `checar_atualidade` roda
+[`checar_atualidade.sql`](airflow/dags/sql/checar_atualidade.sql) depois da carga.
+O ERA5 sai com atraso e a ingestão pede só até hoje − 6, então uma carga boa
+deixa o último registro em hoje − 6; a checagem exige que nenhum município esteja
+antes de **hoje − 7**, um dia de tolerância para atraso pontual da fonte.
+
+* **Hora sem dado não conta.** Um dia que o ERA5 ainda não publicou pode chegar
+  com as medidas nulas; o `MAX` só considera horas com `temperatura_2m`
+  preenchida.
+* **`MAX` de nada é `NULL`, não 0.** Diferente do `COUNT` da completude, o `MAX`
+  de um município sem linhas devolve `NULL`, e `NULL < data` não é verdadeiro —
+  sem um `IS NULL` explícito, o município vazio passaria como em dia. Um teste
+  dedicado a esse caso confirmou a regra.
+* **A checagem depende da carga** (`carregar >> checar`). Sem a dependência, as
+  duas rodariam juntas e a checagem conferiria os dados de ontem — que, com um dia
+  de tolerância, passariam.
+
 ### Backup
 
 A DAG [`manutencao_backup`](airflow/dags/manutencao_backup.py) roda todo dia às
@@ -259,7 +294,7 @@ sem que a nova tenha chegado ao Drive.
 
 Qualquer tarefa que falhe de vez, depois das novas tentativas, manda uma mensagem
 pelo Telegram ([`comum/alertas.py`](airflow/dags/comum/alertas.py), ligado como
-`on_failure_callback` nas duas DAGs). O envio tem tempo limite e uma segunda
+`on_failure_callback` em todas as DAGs). O envio tem tempo limite e uma segunda
 tentativa, e o log registra só o tipo de erro — a mensagem de erro da biblioteca
 traz a URL, e a URL traz o token do bot.
 
@@ -288,9 +323,6 @@ de sinal.
 * **Servidor no fuso de Brasília** (`America/Sao_Paulo`), o mesmo dos dados: a
   imagem da VPS veio no horário europeu, e a ingestão comparava horas de
   Brasília com o relógio da máquina para decidir o que era previsão.
-
-O backfill do histórico ainda roda pelo cron, a cada 6 horas; a próxima DAG o
-substitui.
 
 ## Acesso e segurança
 
@@ -358,15 +390,11 @@ cd ~/clima/ingestao && cp .env.exemplo .env && nano .env && chmod 600 .env
 cd ~/clima/ingestao && set -a && . ./.env && set +a && ./.venv/bin/python ingestao.py backfill --inicio 2025 --fim 2025
 ```
 
-**7. Histórico agendado.** O crontab segue o fuso da VPS — acerte-o antes, para
-o mesmo dos dados:
+**7. Fuso da VPS.** A ingestão decide o que é previsão comparando as horas de
+Brasília com o relógio da máquina — acerte-o para o mesmo fuso dos dados:
 
 ```bash
 sudo timedatectl set-timezone America/Sao_Paulo
-```
-
-```bash
-crontab ~/clima/ingestao/clima-backfill.cron
 ```
 
 **8. Airflow.**
@@ -424,7 +452,12 @@ sudo cp ~/clima/airflow/systemd/airflow@.service /etc/systemd/system/ && sudo sy
 ```
 
 Toda DAG nova nasce pausada: dispare uma execução manual, confira o log da tarefa
-e só então despause.
+e só então despause. Com `catchup=False`, despausar já dispara o último intervalo
+agendado que passou.
+
+Num banco novo, o histórico completo (1940 → hoje) sai pela própria
+`clima_historico`: cada execução avança até a cota da API acabar e a seguinte
+retoma pela `etl_backfill_ano`. Disparos manuais ao longo do dia aceleram a carga.
 
 **9. Backup.** Pasta do SQL Server com o grupo `mssql` herdado pelos arquivos
 novos (`2770`), e o usuário do Airflow no grupo, para a limpeza conseguir apagar
@@ -445,8 +478,8 @@ em cota) e o escopo `drive.file`.
 cd ~/clima && git pull
 ```
 
-Se o arquivo do systemd mudou, copie de novo e rode `daemon-reload`; se o
-`.cron` mudou, reinstale o crontab.
+DAGs e checagens novas entram sozinhas; se o arquivo do systemd mudou, copie de
+novo e rode `daemon-reload`.
 
 ## Lições aprendidas
 
@@ -473,6 +506,12 @@ Se o arquivo do systemd mudou, copie de novo e rode `daemon-reload`; se o
   tolerância. Afrouxar a regra só esconderia o próximo.
 * **Checagem que falha deveria guardar a evidência** — com staging zerada e
   `MERGE` sobrescrevendo, o dado que disparou o alarme some na carga seguinte.
+* **Tolerância pode esconder uma dependência faltando** — sem `carregar >>
+  checar`, a checagem de atualidade rodaria antes da carga e aprovaria os dados
+  de ontem, porque um dia de atraso está dentro da regra.
+* **Troca de agendador: desliga o antigo antes de ligar o novo** — um intervalo
+  sem nenhum dos dois não custa nada; os dois juntos gravando na mesma staging,
+  sim.
 * **Credencial compartilhada tem cota compartilhada** — o client ID padrão do
   rclone devolvia erro de cota no Google; com um app OAuth próprio, o envio
   passou.
@@ -486,8 +525,7 @@ histórica longa e homogênea, e essa distinção deve aparecer no painel.
 
 ## Roteiro
 
-**Para fechar a v1:** DAG do histórico (aposenta o cron) · dicionário de dados ·
-painel Power BI.
+**Para fechar a v1:** dicionário de dados · painel Power BI.
 
 **Operação:** monitor externo, para avisar se a própria VPS parar · tabela de
 quarentena para as linhas que falharem nas checagens.
@@ -503,9 +541,9 @@ pólen).
 sql/        DDL numerado (01..09) + deploy.sh
 ingestao/   open_meteo.py (API) · nomes.py (de-para) · banco.py (staging + MERGE)
             ingestao.py (CLI) · verificar_mapeamento.py · .env.exemplo
-            clima-backfill.cron
-airflow/    dags/clima_incremental.py · dags/manutencao_backup.py
+airflow/    dags/clima_incremental.py · clima_historico.py · manutencao_backup.py
             dags/sql/checar_completude.sql · checar_nulos.sql · checar_faixas.sql
+                     checar_atualidade.sql
             dags/comum/alertas.py · systemd/airflow@.service
 analises/   consultas de exploração (SQL dinâmico)
 docs/       amostras de payload da API
