@@ -14,7 +14,7 @@ documentacao_dag = """
 ### Ingestão Incremental de Clima (RMBH)
 Coleta contínua de dados da **API Open-Meteo** para 6 municípios.
 Busca os últimos 7 dias e 16 dias à frente, atualizando o **SQL Server** via `MERGE` idempotente.
-Após a carga, três checagens em paralelo: completude (552 horas por município), nenhuma coluna de medida 100% nula, e valores dentro dos limites físicos e coerentes entre si.
+Após a carga, três checagens em paralelo: completude (552 horas por município), nenhuma coluna de medida 100% nula, e valores dentro dos limites físicos e coerentes entre si (coerência só até 3 dias à frente: a previsão de longo prazo pode vir inconsistente na própria fonte).
 """
 
 with DAG(

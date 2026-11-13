@@ -14,6 +14,14 @@
    - orvalho: o modelo de previsao chega a dar ponto de orvalho ate 0,7 C acima da
      temperatura. Igualdade e valida (ar saturado); so o excesso grande e defeito.
 
+   Coerencias valem so ate 3 dias a frente (horas realizadas + inicio da previsao).
+   Em 13/11/2026, a propria API devolveu para 26/11 (13 dias a frente), das 06h as
+   09h, radiacao difusa = 0 em plena manha e direta maior que a total - fisicamente
+   impossivel, confirmado chamando a API direto, sem o pipeline. A previsao de longo
+   prazo pode vir inconsistente na fonte; erro do nosso pipeline (coluna trocada,
+   unidade) apareceria tambem no realizado. Os limites fisicos valem para todas as
+   linhas.
+
    NULL nao viola nenhuma regra (a comparacao nao da verdadeiro): nulos sao da
    checar_nulos. Sem linha nenhuma, cada SUM da NULL e todas as colunas viram 0. */
 SELECT
@@ -104,23 +112,28 @@ SELECT
                        THEN 1 ELSE 0 END) = 0
          THEN 1 ELSE 0 END AS codigo_tempo,
 
+    -- coerencias: so dentro da janela confiavel (ver cabecalho)
     -- precipitacao = chuva + pancadas + neve
-    CASE WHEN SUM(CASE WHEN ABS((fca.chuva + fca.pancadas_chuva + fca.neve) - fca.precipitacao) > 0.1
+    CASE WHEN SUM(CASE WHEN fca.data_hora_local < DATEADD(DAY, 3, GETDATE())
+                        AND ABS((fca.chuva + fca.pancadas_chuva + fca.neve) - fca.precipitacao) > 0.1
                        THEN 1 ELSE 0 END) = 0
          THEN 1 ELSE 0 END AS coerencia_precipitacao,
 
     -- ondas curtas = direta + difusa
-    CASE WHEN SUM(CASE WHEN ABS((fca.radiacao_direta + fca.radiacao_difusa) - fca.radiacao_ondas_curtas) > 1
+    CASE WHEN SUM(CASE WHEN fca.data_hora_local < DATEADD(DAY, 3, GETDATE())
+                        AND ABS((fca.radiacao_direta + fca.radiacao_difusa) - fca.radiacao_ondas_curtas) > 1
                        THEN 1 ELSE 0 END) = 0
          THEN 1 ELSE 0 END AS coerencia_radiacoes,
 
     -- ponto de orvalho nao passa da temperatura (igual = ar saturado)
-    CASE WHEN SUM(CASE WHEN fca.ponto_orvalho_2m - fca.temperatura_2m > 1.0
+    CASE WHEN SUM(CASE WHEN fca.data_hora_local < DATEADD(DAY, 3, GETDATE())
+                        AND fca.ponto_orvalho_2m - fca.temperatura_2m > 1.0
                        THEN 1 ELSE 0 END) = 0
          THEN 1 ELSE 0 END AS coerencia_orvalho,
 
     -- o que chega ao chao nao passa do que chega ao topo da atmosfera
-    CASE WHEN SUM(CASE WHEN fca.radiacao_ondas_curtas - fca.radiacao_terrestre > 1
+    CASE WHEN SUM(CASE WHEN fca.data_hora_local < DATEADD(DAY, 3, GETDATE())
+                        AND fca.radiacao_ondas_curtas - fca.radiacao_terrestre > 1
                        THEN 1 ELSE 0 END) = 0
          THEN 1 ELSE 0 END AS coerencia_radiacao_topo
 

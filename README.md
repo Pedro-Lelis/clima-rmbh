@@ -229,9 +229,21 @@ existiam para conferir. A investigação foi pelo que restou: na carga seguinte,
 maior divergência entre direta + difusa e ondas curtas era **0,00 em todos os 23
 dias e nos 6 municípios**. O ruído normal é zero e a tolerância (1 W/m²) tem
 folga total; o erro foi uma inconsistência transitória na própria Open-Meteo,
-corrigida na fonte em ~3 horas. A regra ficou como estava. Se repetir, o próximo
-passo é guardar as linhas que violaram numa tabela de quarentena antes do
-`MERGE` seguinte, para medir o tamanho real do erro.
+corrigida na fonte em ~3 horas. A regra ficou como estava, à espera de evidência.
+
+**O alarme voltou (13/11/2026)** — e desta vez a carga com defeito foi capturada
+numa tabela de investigação antes do `MERGE` seguinte. Para 26/11, 13 dias à
+frente, e só em 4 dos 6 municípios, as horas das 06h às 09h vinham com **radiação
+difusa 0 em plena manhã e direta maior que a total** (até 120 W/m² de diferença) —
+fisicamente impossível, já que a direta é parte da total. A partir das 10h, tudo
+voltava a fechar. Chamar a API direto, sem o pipeline, devolveu exatamente os
+mesmos números: o defeito está na previsão de longo prazo da fonte.
+
+Decisão: **as 4 coerências passaram a valer só até 3 dias à frente** (horas
+realizadas e início da previsão); os limites físicos continuam valendo para
+todas as linhas. Subir a tolerância foi descartado — com 120 W/m², a regra não
+pegaria mais nada. Um erro do nosso pipeline (coluna trocada, unidade errada)
+apareceria também no realizado, que segue coberto.
 
 ### Histórico
 
@@ -501,9 +513,10 @@ novo e rode `daemon-reload`.
   errado: uma versão com a lógica invertida passava nesses dois testes e
   aprovava a carga com um município faltando.
 * **Alarme que tocou se investiga antes de mexer na regra** — a checagem de
-  faixas falhou três horas seguidas e depois passou sozinha. Medir a folga
-  mostrou divergência zero nos dados normais: o erro estava na fonte, não na
-  tolerância. Afrouxar a regra só esconderia o próximo.
+  faixas falhou, passou sozinha e voltou. Medir a folga mostrou divergência zero
+  nos dados normais; capturar a carga e chamar a API direto provou que o erro
+  estava na fonte. A correção foi restringir *onde* a regra vale, não afrouxar
+  a tolerância.
 * **Checagem que falha deveria guardar a evidência** — com staging zerada e
   `MERGE` sobrescrevendo, o dado que disparou o alarme some na carga seguinte.
 * **Tolerância pode esconder uma dependência faltando** — sem `carregar >>
