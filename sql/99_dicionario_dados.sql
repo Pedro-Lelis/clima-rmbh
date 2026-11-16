@@ -46,6 +46,8 @@ INSERT INTO @tabelas (tabela, descricao) VALUES
 (N'fact_clima_atual_hora', N'Dados horários do modelo de previsão da Open-Meteo (/v1/forecast): a cada hora, a janela de 7 dias passados + 16 de previsão é reescrita (DAG clima_incremental). A previsão de uma hora é sobrescrita quando a hora passa - esta tabela não guarda previsões antigas. Horas que saem da janela ficam com o último valor gravado. Origem diferente do histórico: não misturar as duas séries sem dizer. Previsões além de ~3 dias podem vir fisicamente inconsistentes na fonte (caso de 13/11/2026 no README).'),
 (N'fact_clima_atual_dia', N'Agregados diários do modelo de previsão (/v1/forecast), na mesma janela de 7 dias passados + 16 de previsão, reescrita a cada hora.'),
 (N'fact_previsao_snapshot_dia', N'Foto diária da previsão: uma vez por dia, copia da fact_clima_atual_dia os dias ainda previstos (hoje + 15), depois que as checagens de qualidade aprovam a carga. Como a previsão é sobrescrita na origem, só esta tabela permite medir quanto ela erra conforme a antecedência. Começou a ser gravada em novembro de 2026: não há fotos anteriores.'),
+(N'vet_regua', N'Régua da busca de dias análogos: média e desvio-padrão de cada uma das 6 variáveis do vetor, calculados uma vez sobre todo o histórico e congelados. O vetor do dia previsto usa a mesma régua do histórico; mudar a régua exige refazer todos os vetores.'),
+(N'vet_historico_dia', N'Um vetor de 6 dimensões (tipo VECTOR) por município × dia do histórico ERA5, para a busca de dias análogos por distância euclidiana (VECTOR_DISTANCE). Dimensões padronizadas (z-score): temperatura máxima, temperatura mínima, LOG(1 + chuva), LOG(1 + horas de chuva), vento máximo e radiação. Vetores de atributos escolhidos à mão, não embeddings de modelo de IA. Mantida pela procedure dbo.atualizar_vetores_historico.'),
 (N'etl_execucao', N'Log de cada execução da ingestão (backfill ou incremental), uma linha por execução. As checagens de qualidade usam o dt_inicio da última execução incremental para isolar a última carga.'),
 (N'etl_backfill_ano', N'Progresso do backfill histórico por município × ano. Permite parar (cota da API esgotada) e retomar de onde parou. O ano corrente nunca conta como concluído: é buscado de novo a cada execução, só com os dias novos.'),
 (N'stg_clima_historico_hora', N'Área de passagem da ingestão: recebe o lote da API, é zerada (TRUNCATE) a cada carga e um MERGE leva os dados para a fact_clima_historico_hora. Não consultar.'),
@@ -110,6 +112,32 @@ INSERT INTO @colunas (padrao, prioridade, coluna, descricao) VALUES
 (N'etl_backfill_ano', 0, N'linhas_hora',  N'Linhas horárias da última gravação deste município e ano. No ano corrente, é só a ponta buscada na última execução, não o total do ano.'),
 (N'etl_backfill_ano', 0, N'linhas_dia',   N'Linhas diárias da última gravação deste município e ano (no ano corrente, só a ponta mais recente).'),
 (N'etl_backfill_ano', 0, N'dt_conclusao', N'Data e hora da última gravação deste município e ano.');
+
+/* ---------------------------------------------------------------------------
+   vet_regua e vet_historico_dia (busca de dias analogos)
+   --------------------------------------------------------------------------- */
+INSERT INTO @colunas (padrao, prioridade, coluna, descricao) VALUES
+(N'vet_regua', 0, N'regua_id',               N'Sempre 1: a tabela tem uma linha só (CHECK).'),
+(N'vet_regua', 0, N'media_temp_max',         N'Média da temperatura máxima diária no histórico, em °C.'),
+(N'vet_regua', 0, N'media_temp_min',         N'Média da temperatura mínima diária no histórico, em °C.'),
+(N'vet_regua', 0, N'media_log_chuva',        N'Média de LOG(1 + precipitação diária em mm). O log comprime os temporais: a chuva é muito assimétrica (mediana 0,3 mm, média 3,7 mm).'),
+(N'vet_regua', 0, N'media_log_horas_chuva',  N'Média de LOG(1 + horas de precipitação no dia).'),
+(N'vet_regua', 0, N'media_vento_max',        N'Média do vento máximo diário a 10 m, em km/h.'),
+(N'vet_regua', 0, N'media_radiacao',         N'Média da radiação solar global diária, em MJ/m².'),
+(N'vet_regua', 0, N'desvio_temp_max',        N'Desvio-padrão populacional (STDEVP) da temperatura máxima diária.'),
+(N'vet_regua', 0, N'desvio_temp_min',        N'Desvio-padrão populacional da temperatura mínima diária.'),
+(N'vet_regua', 0, N'desvio_log_chuva',       N'Desvio-padrão populacional de LOG(1 + precipitação diária).'),
+(N'vet_regua', 0, N'desvio_log_horas_chuva', N'Desvio-padrão populacional de LOG(1 + horas de precipitação).'),
+(N'vet_regua', 0, N'desvio_vento_max',       N'Desvio-padrão populacional do vento máximo diário.'),
+(N'vet_regua', 0, N'desvio_radiacao',        N'Desvio-padrão populacional da radiação solar global diária.'),
+(N'vet_regua', 0, N'periodo_inicio',         N'Primeiro dia do histórico usado no cálculo.'),
+(N'vet_regua', 0, N'periodo_fim',            N'Último dia do histórico usado no cálculo.'),
+(N'vet_regua', 0, N'dt_calculo',             N'Data e hora em que a régua foi calculada.'),
+
+(N'vet_historico_dia', 0, N'municipio_id', N'Município (FK para dim_municipio).'),
+(N'vet_historico_dia', 0, N'data_id',      N'Dia do histórico (FK para dim_data, AAAAMMDD).'),
+(N'vet_historico_dia', 0, N'vetor',        N'Vetor de 6 dimensões em float32, na ordem: temperatura máxima, temperatura mínima, LOG(1 + chuva), LOG(1 + horas de chuva), vento máximo, radiação - cada uma como z-score pela vet_regua. Dias com alguma das 6 variáveis nula não têm vetor.'),
+(N'vet_historico_dia', 0, N'dt_calculo',   N'Data e hora em que o vetor foi calculado. Se o dia for recarregado depois disso (dt_carga maior), a procedure refaz o vetor.');
 
 /* ---------------------------------------------------------------------------
    Fatos - colunas tecnicas
@@ -300,7 +328,7 @@ LEFT JOIN sys.extended_properties ep
        ON ep.class = 1 AND ep.major_id = c.object_id AND ep.minor_id = c.column_id
       AND ep.name = N'MS_Description'
 WHERE t.schema_id = SCHEMA_ID(N'dbo')
-  AND (t.name LIKE N'dim[_]%' OR t.name LIKE N'fact[_]%' OR t.name LIKE N'etl[_]%')
+  AND (t.name LIKE N'dim[_]%' OR t.name LIKE N'fact[_]%' OR t.name LIKE N'etl[_]%' OR t.name LIKE N'vet[_]%')
   AND ep.major_id IS NULL
 ORDER BY t.name, c.column_id;
 

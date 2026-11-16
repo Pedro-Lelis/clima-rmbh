@@ -15,7 +15,8 @@ WITH colunas AS (
     SELECT
         CASE WHEN stb.name LIKE 'dim[_]%'  THEN 1
              WHEN stb.name LIKE 'fact[_]%' THEN 2
-             ELSE 3 END                                             AS grupo,
+             WHEN stb.name LIKE 'vet[_]%'  THEN 3
+             ELSE 4 END                                             AS grupo,
         stb.name                                                    AS tabela,
         CAST(sep_tab.value AS NVARCHAR(2000))                       AS descricao_tabela,
         scm.column_id,
@@ -55,7 +56,7 @@ WITH colunas AS (
           AND sep_tab.minor_id = 0
           AND sep_tab.name     = 'MS_Description'
     WHERE stb.schema_id = SCHEMA_ID('dbo')
-      AND (stb.name LIKE 'dim[_]%' OR stb.name LIKE 'fact[_]%' OR stb.name LIKE 'etl[_]%')
+      AND (stb.name LIKE 'dim[_]%' OR stb.name LIKE 'fact[_]%' OR stb.name LIKE 'etl[_]%' OR stb.name LIKE 'vet[_]%')
 ),
 tabelas AS (
     SELECT DISTINCT grupo, tabela, descricao_tabela FROM colunas
