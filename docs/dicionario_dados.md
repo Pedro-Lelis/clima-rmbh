@@ -232,6 +232,54 @@ Foto diária da previsão: uma vez por dia, copia da fact_clima_atual_dia os dia
 | `dt_carga_origem` | datetime2(3) | não |  | dt_carga da linha copiada da fact_clima_atual_dia: qual carga incremental gerou esta previsão. |
 | `dt_snapshot` | datetime2(3) | não |  | Data e hora em que a foto foi gravada. |
 
+## vet_analogos
+
+(sem descrição)
+
+| Coluna | Tipo | Nulo | Chave | Descrição |
+|---|---|---|---|---|
+| `municipio_id` | int | não | PK | (sem descrição) |
+| `data_id_prevista` | int | não | PK | (sem descrição) |
+| `posicao` | tinyint | não | PK | (sem descrição) |
+| `data_id_analogo` | int | não |  | (sem descrição) |
+| `distancia` | float | não |  | (sem descrição) |
+| `antecedencia_dias` | tinyint | não |  | (sem descrição) |
+| `dt_calculo` | datetime2(3) | não |  | (sem descrição) |
+
+## vet_historico_dia
+
+(sem descrição)
+
+| Coluna | Tipo | Nulo | Chave | Descrição |
+|---|---|---|---|---|
+| `municipio_id` | int | não | PK | (sem descrição) |
+| `data_id` | int | não | PK | (sem descrição) |
+| `vetor` | vector | não |  | (sem descrição) |
+| `dt_calculo` | datetime2(3) | não |  | (sem descrição) |
+
+## vet_regua
+
+(sem descrição)
+
+| Coluna | Tipo | Nulo | Chave | Descrição |
+|---|---|---|---|---|
+| `regua_id` | tinyint | não | PK | (sem descrição) |
+| `media_temp_max` | float | não |  | (sem descrição) |
+| `media_temp_min` | float | não |  | (sem descrição) |
+| `media_log_chuva` | float | não |  | (sem descrição) |
+| `media_log_horas_chuva` | float | não |  | (sem descrição) |
+| `media_vento_max` | float | não |  | (sem descrição) |
+| `media_radiacao` | float | não |  | (sem descrição) |
+| `desvio_temp_max` | float | não |  | (sem descrição) |
+| `desvio_temp_min` | float | não |  | (sem descrição) |
+| `desvio_log_chuva` | float | não |  | (sem descrição) |
+| `desvio_log_horas_chuva` | float | não |  | (sem descrição) |
+| `desvio_vento_max` | float | não |  | (sem descrição) |
+| `desvio_radiacao` | float | não |  | (sem descrição) |
+| `periodo_inicio` | date | não |  | (sem descrição) |
+| `periodo_fim` | date | não |  | (sem descrição) |
+| `dt_calculo` | datetime2(3) | não |  | (sem descrição) |
+
 ## etl_backfill_ano
 
 Progresso do backfill histórico por município × ano. Permite parar (cota da API esgotada) e retomar de onde parou. O ano corrente nunca conta como concluído: é buscado de novo a cada execução, só com os dias novos.
