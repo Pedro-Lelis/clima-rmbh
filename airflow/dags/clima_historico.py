@@ -51,6 +51,7 @@ with DAG(
         sql="EXEC dbo.atualizar_vetores_historico;",
         hook_params={"driver": "ODBC Driver 18 for SQL Server"},
         autocommit=True,
+        show_return_value_in_logs=True,  # o SELECT final da procedure aparece no log
     )
 
     # usa a previsao da carga incremental das 04:10
@@ -60,6 +61,7 @@ with DAG(
         sql="EXEC dbo.calcular_dias_analogos;",
         hook_params={"driver": "ODBC Driver 18 for SQL Server"},
         autocommit=True,
+        show_return_value_in_logs=True,  # o SELECT final da procedure aparece no log
     )
 
     carregar_historico >> checar_atualidade

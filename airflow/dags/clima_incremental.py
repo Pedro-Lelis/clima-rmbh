@@ -65,6 +65,7 @@ with DAG(
         sql="sql/gravar_snapshot_previsao.sql",
         hook_params={"driver": "ODBC Driver 18 for SQL Server"},
         autocommit=True,
+        show_return_value_in_logs=True,  # o SELECT final do script (linhas_gravadas) aparece no log
     )
 
     carregar >> [checar_completude, checar_nulos, checar_faixas] >> gravar_snapshot
