@@ -1,7 +1,7 @@
 import pendulum
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.bash import BashOperator
-from airflow.providers.common.sql.operators.sql import SQLCheckOperator
+from airflow.providers.common.sql.operators.sql import SQLCheckOperator, SQLExecuteQueryOperator
 from comum.alertas import avisar_falha
 
 argumentos_padrao = {
@@ -16,6 +16,8 @@ Busca a ponta do ano corrente da reanálise ERA5 na **API Open-Meteo**.
 Roda uma vez ao dia, de madrugada, inserindo os dados de forma idempotente via `MERGE`.
 Após a carga, uma checagem de atualidade: o último registro de cada município não pode ser anterior a hoje − 7 dias
 (o script busca até hoje − 6, e o dia a mais tolera atraso pontual do ERA5).
+Em paralelo, atualiza os vetores do histórico e calcula os **dias análogos** dos próximos 7 dias previstos
+(`VECTOR_DISTANCE` no SQL Server 2025).
 """
 
 with DAG(
@@ -42,4 +44,23 @@ with DAG(
         retries=0,
     )
     
+    # vetores dos dias novos (e dos recarregados) antes de buscar os analogos
+    atualizar_vetores = SQLExecuteQueryOperator(
+        task_id="atualizar_vetores",
+        conn_id="clima_sqlserver_vetor",
+        sql="EXEC dbo.atualizar_vetores_historico;",
+        hook_params={"driver": "ODBC Driver 18 for SQL Server"},
+        autocommit=True,
+    )
+
+    # usa a previsao da carga incremental das 04:10
+    calcular_analogos = SQLExecuteQueryOperator(
+        task_id="calcular_analogos",
+        conn_id="clima_sqlserver_vetor",
+        sql="EXEC dbo.calcular_dias_analogos;",
+        hook_params={"driver": "ODBC Driver 18 for SQL Server"},
+        autocommit=True,
+    )
+
     carregar_historico >> checar_atualidade
+    carregar_historico >> atualizar_vetores >> calcular_analogos

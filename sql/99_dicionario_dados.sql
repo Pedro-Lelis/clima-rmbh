@@ -48,6 +48,7 @@ INSERT INTO @tabelas (tabela, descricao) VALUES
 (N'fact_previsao_snapshot_dia', N'Foto diária da previsão: uma vez por dia, copia da fact_clima_atual_dia os dias ainda previstos (hoje + 15), depois que as checagens de qualidade aprovam a carga. Como a previsão é sobrescrita na origem, só esta tabela permite medir quanto ela erra conforme a antecedência. Começou a ser gravada em novembro de 2026: não há fotos anteriores.'),
 (N'vet_regua', N'Régua da busca de dias análogos: média e desvio-padrão de cada uma das 6 variáveis do vetor, calculados uma vez sobre todo o histórico e congelados. O vetor do dia previsto usa a mesma régua do histórico; mudar a régua exige refazer todos os vetores.'),
 (N'vet_historico_dia', N'Um vetor de 6 dimensões (tipo VECTOR) por município × dia do histórico ERA5, para a busca de dias análogos por distância euclidiana (VECTOR_DISTANCE). Dimensões padronizadas (z-score): temperatura máxima, temperatura mínima, LOG(1 + chuva), LOG(1 + horas de chuva), vento máximo e radiação. Vetores de atributos escolhidos à mão, não embeddings de modelo de IA. Mantida pela procedure dbo.atualizar_vetores_historico.'),
+(N'vet_analogos', N'Dias análogos dos próximos 7 dias previstos: para cada município e dia previsto, os 10 dias do histórico com vetor mais próximo (um por ano, fora os últimos 30 dias). Guarda só o cálculo mais recente, refeito todo dia pela procedure dbo.calcular_dias_analogos (DAG clima_historico).'),
 (N'etl_execucao', N'Log de cada execução da ingestão (backfill ou incremental), uma linha por execução. As checagens de qualidade usam o dt_inicio da última execução incremental para isolar a última carga.'),
 (N'etl_backfill_ano', N'Progresso do backfill histórico por município × ano. Permite parar (cota da API esgotada) e retomar de onde parou. O ano corrente nunca conta como concluído: é buscado de novo a cada execução, só com os dias novos.'),
 (N'stg_clima_historico_hora', N'Área de passagem da ingestão: recebe o lote da API, é zerada (TRUNCATE) a cada carga e um MERGE leva os dados para a fact_clima_historico_hora. Não consultar.'),
@@ -138,6 +139,15 @@ INSERT INTO @colunas (padrao, prioridade, coluna, descricao) VALUES
 (N'vet_historico_dia', 0, N'data_id',      N'Dia do histórico (FK para dim_data, AAAAMMDD).'),
 (N'vet_historico_dia', 0, N'vetor',        N'Vetor de 6 dimensões em float32, na ordem: temperatura máxima, temperatura mínima, LOG(1 + chuva), LOG(1 + horas de chuva), vento máximo, radiação - cada uma como z-score pela vet_regua. Dias com alguma das 6 variáveis nula não têm vetor.'),
 (N'vet_historico_dia', 0, N'dt_calculo',   N'Data e hora em que o vetor foi calculado. Se o dia for recarregado depois disso (dt_carga maior), a procedure refaz o vetor.');
+
+INSERT INTO @colunas (padrao, prioridade, coluna, descricao) VALUES
+(N'vet_analogos', 0, N'municipio_id',      N'Município (FK para dim_municipio). Os análogos são sempre do mesmo município.'),
+(N'vet_analogos', 0, N'data_id_prevista',  N'Dia previsto (FK para dim_data, AAAAMMDD), de hoje até 6 dias à frente.'),
+(N'vet_analogos', 0, N'posicao',           N'Ordem do análogo: 1 = o mais parecido.'),
+(N'vet_analogos', 0, N'data_id_analogo',   N'Dia do histórico parecido com o dia previsto (FK para dim_data).'),
+(N'vet_analogos', 0, N'distancia',         N'Distância euclidiana entre os dois vetores, em desvios-padrão combinados: perto de 1 = muito parecido; acima de 2 = parecido só no geral.'),
+(N'vet_analogos', 0, N'antecedencia_dias', N'Dias entre o cálculo e o dia previsto: 0 = hoje … 6.'),
+(N'vet_analogos', 0, N'dt_calculo',        N'Data e hora do cálculo.');
 
 /* ---------------------------------------------------------------------------
    Fatos - colunas tecnicas
