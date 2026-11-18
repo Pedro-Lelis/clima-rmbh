@@ -109,7 +109,7 @@ GO
 CREATE OR ALTER VIEW bi.vw_condicao_atual
 AS
 SELECT municipio_id, data_id, data_hora_local, codigo_tempo,
-       temperatura_2m, sensacao_termica, umidade_relativa_2m, precipitacao,
+       temperatura_2m, sensacao_termica, umidade_relativa_2m, ponto_orvalho_2m, precipitacao,
        velocidade_vento_10m, rajada_vento_10m, direcao_vento_10m,
        cobertura_nuvens, indice_uv, dt_carga
 FROM (
