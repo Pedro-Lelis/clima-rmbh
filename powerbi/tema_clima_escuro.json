@@ -89,18 +89,20 @@
         "filterCard": [
           {
             "$id": "Applied",
-            "backgroundColor": { "solid": { "color": "#1E293B" } },
-            "foregroundColor": { "solid": { "color": "#E2E8F0" } },
-            "borderColor": { "solid": { "color": "#2DD4BF" } },
-            "inputBoxColor": { "solid": { "color": "#0F172A" } },
+            "backgroundColor": { "solid": { "color": "#E2E8F0" } },
+            "foregroundColor": { "solid": { "color": "#0F172A" } },
+            "borderColor": { "solid": { "color": "#0D9488" } },
+            "inputBoxColor": { "solid": { "color": "#FFFFFF" } },
+            "border": true,
             "transparency": 0
           },
           {
             "$id": "Available",
-            "backgroundColor": { "solid": { "color": "#1E293B" } },
-            "foregroundColor": { "solid": { "color": "#E2E8F0" } },
-            "borderColor": { "solid": { "color": "#334155" } },
-            "inputBoxColor": { "solid": { "color": "#0F172A" } },
+            "backgroundColor": { "solid": { "color": "#CBD5E1" } },
+            "foregroundColor": { "solid": { "color": "#0F172A" } },
+            "borderColor": { "solid": { "color": "#94A3B8" } },
+            "inputBoxColor": { "solid": { "color": "#FFFFFF" } },
+            "border": true,
             "transparency": 0
           }
         ]
