@@ -2574,6 +2574,16 @@ cultureInfo pt-BR
 			            "State": "Generated",
 			            "Weight": 0.7
 			          }
+			        },
+			        {
+			          "Início": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
 			        }
 			      ],
 			      "SemanticType": "Time"
@@ -2995,6 +3005,16 @@ cultureInfo pt-BR
 			            "Type": "Noun",
 			            "State": "Generated",
 			            "Weight": 0.99
+			          }
+			        },
+			        {
+			          "Duração": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
 			          }
 			        }
 			      ]
@@ -10619,6 +10639,195 @@ cultureInfo pt-BR
 			      "Terms": [
 			        {
 			          "Análogos": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.rotina": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Rotina"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Rotina": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.duração_s": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Duração (s)"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Duração": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.dia_execução": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Dia execução"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Dia": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.hora": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Hora"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Hora": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.execuções": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Execuções"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Execuções": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.último_histórico": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Último histórico"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Último histórico diário": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.última_coleta": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Última coleta"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Última coleta horária": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.duração_média_coleta": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Duração média coleta"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Duração média · coleta": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "vw_execucoes.taxa_de_sucesso": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "vw_execucoes",
+			          "ConceptualProperty": "Taxa de sucesso"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Sucesso · 7 dias": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",

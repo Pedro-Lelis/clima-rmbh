@@ -1,6 +1,78 @@
 table vw_execucoes
 	lineageTag: ff34711c-5bf8-44cd-932b-acc577377f39
 
+	measure Execuções = COUNTROWS ( vw_execucoes )
+		formatString: 0
+		lineageTag: fce63903-e120-44e1-a561-3245403e4b9e
+
+	measure 'Execuções concluídas' = CALCULATE ( [Execuções], vw_execucoes[status] <> "rodando" )
+		formatString: 0
+		lineageTag: af82bacd-857c-4e24-936e-d61838405a5d
+
+	measure 'Execuções com sucesso' = CALCULATE ( [Execuções], vw_execucoes[status] = "sucesso" )
+		formatString: 0
+		lineageTag: 4ff6f505-ceb6-404f-8e07-d72f3385efe9
+
+	measure 'Taxa de sucesso' = DIVIDE ( [Execuções com sucesso], [Execuções concluídas] )
+		formatString: 0%
+		lineageTag: a37d8f6a-7f82-420f-b37a-bc3a55d39966
+
+	measure 'Resumo execuções' = FORMAT ( [Execuções com sucesso] + 0, "0" ) & " de " & FORMAT ( [Execuções concluídas] + 0, "0" )
+		lineageTag: 2b3095d4-8ab6-4218-b430-2bb77adb27e2
+
+	measure 'Última coleta' = FORMAT ( CALCULATE ( MAX ( vw_execucoes[dt_inicio] ), vw_execucoes[modo] = "incremental" ), "dd/mm hh:nn" )
+		lineageTag: e9b79d33-fbf9-4379-8d9f-8b1a2c857b5c
+
+	measure 'Duração última coleta' =
+			VAR ultima = CALCULATE ( MAX ( vw_execucoes[dt_inicio] ), vw_execucoes[modo] = "incremental" )
+			RETURN CALCULATE ( MAX ( vw_execucoes[duracao_s] ), vw_execucoes[dt_inicio] = ultima )
+		formatString: 0" s"
+		lineageTag: 757bbbad-38ab-4e5b-9d8d-2de87411a21c
+
+	measure 'Último histórico' = FORMAT ( CALCULATE ( MAX ( vw_execucoes[dt_inicio] ), vw_execucoes[modo] = "backfill" ), "dd/mm hh:nn" )
+		lineageTag: 7f4285da-f722-422c-aab1-97149d4c045a
+
+	measure 'Status último histórico' =
+			VAR ultima = CALCULATE ( MAX ( vw_execucoes[dt_inicio] ), vw_execucoes[modo] = "backfill" )
+			RETURN CALCULATE ( SELECTEDVALUE ( vw_execucoes[status] ), vw_execucoes[dt_inicio] = ultima )
+		lineageTag: f24243b1-1d1f-43be-a63d-db1a3f472d99
+
+	measure 'Duração média coleta' = CALCULATE ( AVERAGE ( vw_execucoes[duracao_s] ), vw_execucoes[modo] = "incremental", vw_execucoes[status] = "sucesso" )
+		formatString: 0" s"
+		lineageTag: 0de57b87-cb5e-419b-80ff-a4c1dba30fb9
+
+	measure 'Duração máxima coleta' =
+			VAR s = CALCULATE ( MAX ( vw_execucoes[duracao_s] ), vw_execucoes[modo] = "incremental" )
+			RETURN IF ( s >= 60, INT ( s / 60 ) & " min " & MOD ( s, 60 ) & " s", s & " s" )
+		lineageTag: 8e6dfba8-115b-4f7c-bf39-33e1702a0e5e
+
+	measure 'Duração (s)' = AVERAGE ( vw_execucoes[duracao_s] )
+		formatString: 0
+		lineageTag: 4c130fbf-1268-499a-bc43-340c520479ae
+
+	measure 'Cor grade' =
+			VAR execs = COUNTROWS ( vw_execucoes )
+			VAR erros = CALCULATE ( COUNTROWS ( vw_execucoes ), vw_execucoes[status] = "erro" )
+			VAR sucessos = CALCULATE ( COUNTROWS ( vw_execucoes ), vw_execucoes[status] = "sucesso" )
+			RETURN
+			    SWITCH (
+			        TRUE (),
+			        ISBLANK ( execs ), BLANK (),
+			        erros > 0, "#F87171",
+			        sucessos = execs, "#0D9488",
+			        "#FACC15"
+			    )
+		lineageTag: dba30a30-78e0-428c-8007-ae84de6bc53d
+
+	measure 'Cor status' = SWITCH ( SELECTEDVALUE ( vw_execucoes[status] ), "sucesso", "#2DD4BF", "erro", "#F87171", "#FACC15" )
+		lineageTag: 6c7ff18e-2fcd-46b8-8fb6-0d63b294209d
+
+	measure 'Titulo Pipeline' = "Saúde do pipeline"
+		lineageTag: c19e0781-8132-45af-bf44-899ca68550ba
+
+	measure 'Subtitulo Pipeline' = "Últimos 7 dias até " & FORMAT ( MAX ( vw_execucoes[dt_inicio] ), "dd/mm hh:nn" ) & " · coleta horária no minuto 10 e histórico diário às 04:20"
+		lineageTag: 01c04341-38df-4a32-8c7d-273521affa75
+
 	column execucao_id
 		dataType: int64
 		formatString: 0
@@ -40,7 +112,7 @@ table vw_execucoes
 
 	column dt_inicio
 		dataType: dateTime
-		formatString: General Date
+		formatString: dd/mm hh:nn
 		lineageTag: b2b1efd8-e50e-4405-bc55-8dc5c9d4b72a
 		summarizeBy: none
 		sourceColumn: dt_inicio
@@ -68,7 +140,7 @@ table vw_execucoes
 
 	column duracao_s
 		dataType: int64
-		formatString: 0
+		formatString: 0" s"
 		lineageTag: 4449b9d4-7508-412f-9842-e8d6fb6cf7b7
 		summarizeBy: sum
 		sourceColumn: duracao_s
@@ -92,6 +164,40 @@ table vw_execucoes
 		sourceColumn: linhas_dia
 
 		annotation SummarizationSetBy = Automatic
+
+	column Rotina = SWITCH ( vw_execucoes[modo], "incremental", "coleta horária", "backfill", "histórico diário", vw_execucoes[modo] )
+		lineageTag: 7412e7f8-6caa-4086-9430-7d90f328181c
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+	column Hora = HOUR ( vw_execucoes[dt_inicio] )
+		formatString: 0"h"
+		lineageTag: d89e5121-b365-4f08-a58c-88b8ff4e6f85
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+	column 'Dia execução' =
+			VAR d = vw_execucoes[dt_inicio]
+			RETURN
+			    SWITCH ( WEEKDAY ( d, 1 ), 1, "dom", 2, "seg", 3, "ter", 4, "qua", 5, "qui", 6, "sex", "sáb" )
+			        & " " & FORMAT ( d, "dd/mm" )
+		lineageTag: cdacc881-ae2b-423e-9e9a-ce80f51aa157
+		summarizeBy: none
+		sortByColumn: data_id
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = User
+
+	column 'Últimos 7 dias' =
+			VAR ultimo_dia = INT ( MAX ( vw_execucoes[dt_inicio] ) )
+			RETURN INT ( vw_execucoes[dt_inicio] ) >= ultimo_dia - 6
+		lineageTag: 1227fc1d-ab32-4c7a-aa6b-10a82188356d
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
 
 	partition vw_execucoes = m
 		mode: import

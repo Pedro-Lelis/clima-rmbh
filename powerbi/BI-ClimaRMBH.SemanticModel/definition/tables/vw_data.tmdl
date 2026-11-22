@@ -187,3 +187,5 @@ table vw_data
 				in
 				  #"Navegação 1"
 
+	annotation PBI_ResultType = Table
+

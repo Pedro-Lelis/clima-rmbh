@@ -528,5 +528,6 @@
     },
     "drillFilterOtherVisuals": true
   },
-  "parentGroupName": "0023272317ad03b34065"
+  "parentGroupName": "0023272317ad03b34065",
+  "isHidden": true
 }
