@@ -1,0 +1,180 @@
+table vw_previsao_x_realizado
+	lineageTag: 83f4aad4-be89-4554-af57-14738c32923e
+
+	column data_coleta
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 644a2347-d0a6-4ff3-9818-50756e8486ef
+		summarizeBy: none
+		sourceColumn: data_coleta
+
+		variation Variation
+			isDefault
+			relationship: f61eb367-00de-4fee-acf4-e2e6260c4024
+			defaultHierarchy: LocalDateTable_271a9842-2d5c-4d82-ad17-9d14225df338.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column municipio_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c35f0cc9-b4a2-4120-be43-58c25970ba01
+		summarizeBy: none
+		sourceColumn: municipio_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 87272d4c-d082-462f-99b5-e960e85d9722
+		summarizeBy: none
+		sourceColumn: data_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column antecedencia_dias
+		dataType: int64
+		formatString: 0
+		lineageTag: bc207fd9-00cb-48dc-9e35-37224622dbea
+		summarizeBy: sum
+		sourceColumn: antecedencia_dias
+
+		annotation SummarizationSetBy = Automatic
+
+	column temp_max_prevista
+		dataType: double
+		lineageTag: 09d52913-397d-46a6-8d0f-b667204abc5b
+		summarizeBy: sum
+		sourceColumn: temp_max_prevista
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column temp_max_realizada
+		dataType: double
+		lineageTag: 9b1d1bc3-4db9-4048-ad83-c6425f1e5b55
+		summarizeBy: sum
+		sourceColumn: temp_max_realizada
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column erro_temp_max
+		dataType: double
+		lineageTag: ed5504f5-5f4d-4b0d-a444-0919d9004fab
+		summarizeBy: sum
+		sourceColumn: erro_temp_max
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column temp_min_prevista
+		dataType: double
+		lineageTag: 525bff4f-3815-48ba-b19c-e6458f51c44c
+		summarizeBy: sum
+		sourceColumn: temp_min_prevista
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column temp_min_realizada
+		dataType: double
+		lineageTag: f6a6c986-ee3d-487e-bbf1-399a052ba320
+		summarizeBy: sum
+		sourceColumn: temp_min_realizada
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column erro_temp_min
+		dataType: double
+		lineageTag: 0a88b6cd-ff5b-4d4d-a843-7acbb4cc46f7
+		summarizeBy: sum
+		sourceColumn: erro_temp_min
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column chuva_prevista
+		dataType: double
+		lineageTag: dea68d4d-bed6-43cb-9e85-a69d7e035155
+		summarizeBy: sum
+		sourceColumn: chuva_prevista
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column chuva_realizada
+		dataType: double
+		lineageTag: 56883790-a313-4e67-a0a0-e31aa7f050a7
+		summarizeBy: sum
+		sourceColumn: chuva_realizada
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column erro_chuva
+		dataType: double
+		lineageTag: 9ec7b8e4-b70b-47fd-818f-82e2247c77df
+		summarizeBy: sum
+		sourceColumn: erro_chuva
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column probabilidade_chuva_prevista
+		dataType: int64
+		formatString: 0
+		lineageTag: ccfb23e0-0874-45f5-acf8-429832faf265
+		summarizeBy: sum
+		sourceColumn: probabilidade_chuva_prevista
+
+		annotation SummarizationSetBy = Automatic
+
+	column choveu_previsto
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 52ed9b5f-f862-4a5d-af8c-98f62e3138bb
+		summarizeBy: none
+		sourceColumn: choveu_previsto
+
+		annotation SummarizationSetBy = Automatic
+
+	column choveu_realizado
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 9dd39490-b358-4c82-bfcf-1fb89638137f
+		summarizeBy: none
+		sourceColumn: choveu_realizado
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_previsao_x_realizado = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_previsao_x_realizado"]}[Data]
+				in
+				  #"Navegação 1"
+
+	annotation PBI_ResultType = Table
+

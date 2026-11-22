@@ -1,0 +1,78 @@
+table vw_municipio
+	lineageTag: ab1ee2db-9125-4c51-a298-c94cadbdfe55
+
+	column municipio_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 36651519-c387-4861-9b92-884926c744fd
+		summarizeBy: none
+		sourceColumn: municipio_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome
+		dataType: string
+		lineageTag: 65b9fd9e-a468-4f77-8e08-fd98544211b4
+		summarizeBy: none
+		sourceColumn: nome
+
+		annotation SummarizationSetBy = Automatic
+
+	column codigo_ibge
+		dataType: int64
+		formatString: 0
+		lineageTag: 3578ec98-98bc-4dec-9988-c108245a541e
+		summarizeBy: none
+		sourceColumn: codigo_ibge
+
+		annotation SummarizationSetBy = User
+
+	column uf
+		dataType: string
+		lineageTag: 3fd06215-4c8d-44cf-814f-4174b26ab1d8
+		summarizeBy: none
+		sourceColumn: uf
+
+		annotation SummarizationSetBy = Automatic
+
+	column latitude
+		dataType: double
+		lineageTag: 123af3f0-7082-4471-8ce7-c03f637ee184
+		dataCategory: Latitude
+		summarizeBy: sum
+		sourceColumn: latitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column longitude
+		dataType: double
+		lineageTag: 08db7daa-08e0-4f54-8519-7fa73d99b74e
+		dataCategory: Longitude
+		summarizeBy: sum
+		sourceColumn: longitude
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column elevacao_m
+		dataType: double
+		lineageTag: 79484d94-c778-4568-b444-7586a64867a9
+		summarizeBy: none
+		sourceColumn: elevacao_m
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition vw_municipio = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_municipio"]}[Data]
+				in
+				  #"Navegação 1"
+

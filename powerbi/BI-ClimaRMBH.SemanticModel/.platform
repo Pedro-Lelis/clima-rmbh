@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "BI-ClimaRMBH"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "23987290-1aea-4112-ac73-e60cb19708e5"
+  }
+}

@@ -1,0 +1,175 @@
+table vw_condicao_atual
+	lineageTag: 7bb6f70c-e980-4fed-818c-286f682d1c6c
+
+	column municipio_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: c7fabbc2-bfe6-4b2f-8621-f6138e5a21b2
+		summarizeBy: none
+		sourceColumn: municipio_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9a0c68ee-2b75-4db4-9dca-32c99d9ee42e
+		summarizeBy: none
+		sourceColumn: data_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_hora_local
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 6b1d3169-58a9-484f-a92a-80212b8de0d2
+		summarizeBy: none
+		sourceColumn: data_hora_local
+
+		variation Variation
+			isDefault
+			relationship: 70ae6ac9-89d4-42fb-a287-1d92cbc57b2f
+			defaultHierarchy: LocalDateTable_dece138a-b6f3-468d-8761-59c5bd7ebee6.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column codigo_tempo
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bb82b132-c6bf-4d01-9b7f-297ae8e8e7f6
+		summarizeBy: none
+		sourceColumn: codigo_tempo
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column temperatura_2m
+		dataType: double
+		lineageTag: c503e0f1-a4af-44a9-bebc-10c13df5a465
+		summarizeBy: sum
+		sourceColumn: temperatura_2m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column sensacao_termica
+		dataType: double
+		lineageTag: 01aa21b1-f785-48df-b01c-efb1694f94f7
+		summarizeBy: sum
+		sourceColumn: sensacao_termica
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column umidade_relativa_2m
+		dataType: double
+		lineageTag: 31348d74-5663-4621-b263-4cf03fadc505
+		summarizeBy: sum
+		sourceColumn: umidade_relativa_2m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column precipitacao
+		dataType: double
+		lineageTag: 12ce4385-24c3-4c12-aefa-40d217eb269f
+		summarizeBy: sum
+		sourceColumn: precipitacao
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column velocidade_vento_10m
+		dataType: double
+		lineageTag: 583f3750-d7c1-4eb5-9725-7f93b319b802
+		summarizeBy: sum
+		sourceColumn: velocidade_vento_10m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rajada_vento_10m
+		dataType: double
+		lineageTag: 64d7bd8d-fbfd-46d7-9477-d408a16d8337
+		summarizeBy: sum
+		sourceColumn: rajada_vento_10m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column direcao_vento_10m
+		dataType: int64
+		formatString: 0
+		lineageTag: 11bde3c4-947b-4af5-8b54-c9ba565ed0a7
+		summarizeBy: sum
+		sourceColumn: direcao_vento_10m
+
+		annotation SummarizationSetBy = Automatic
+
+	column cobertura_nuvens
+		dataType: double
+		lineageTag: e6b09faf-a4d3-4f65-95ee-d376c27b71a3
+		summarizeBy: sum
+		sourceColumn: cobertura_nuvens
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column indice_uv
+		dataType: double
+		lineageTag: b707c186-30f0-43ef-b1bc-b7a4f0f7c4bf
+		summarizeBy: sum
+		sourceColumn: indice_uv
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dt_carga
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 62a9cd16-62a3-48c8-a337-acc1d3493364
+		summarizeBy: none
+		sourceColumn: dt_carga
+
+		variation Variation
+			isDefault
+			relationship: 523b3eed-9935-421a-8c05-baaff9fa48c5
+			defaultHierarchy: LocalDateTable_989b4eee-1b07-4e35-ba92-f4f95a8ef833.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column ponto_orvalho_2m
+		dataType: double
+		lineageTag: a607e81d-f3b8-4392-9ada-cd5c881532ed
+		summarizeBy: sum
+		sourceColumn: ponto_orvalho_2m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition vw_condicao_atual = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_condicao_atual"]}[Data]
+				in
+				  #"Navegação 1"
+

@@ -1,0 +1,37 @@
+table vw_codigo_tempo
+	lineageTag: 65451946-cd25-4a81-b81f-e45850fad9b4
+
+	column codigo_tempo
+		dataType: int64
+		formatString: 0
+		lineageTag: 86223475-de90-4076-b0f0-04f9311ecf13
+		summarizeBy: none
+		sourceColumn: codigo_tempo
+
+		annotation SummarizationSetBy = Automatic
+
+	column descricao
+		dataType: string
+		lineageTag: abfd391e-68bc-42a1-8b58-ad97a058d17a
+		summarizeBy: none
+		sourceColumn: descricao
+
+		annotation SummarizationSetBy = Automatic
+
+	column grupo
+		dataType: string
+		lineageTag: 18ca7c53-8a3c-43cf-96ae-b92b140d7372
+		summarizeBy: none
+		sourceColumn: grupo
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_codigo_tempo = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_codigo_tempo"]}[Data]
+				in
+				  #"Navegação 1"
+

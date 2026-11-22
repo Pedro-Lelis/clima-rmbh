@@ -1,0 +1,263 @@
+table vw_dias_analogos
+	lineageTag: f5a0a379-271b-45cd-920a-103ce8b6be7e
+
+	measure Análogos = COUNTROWS ( vw_dias_analogos )
+		formatString: 0
+		lineageTag: 8f0b9f4d-76db-43d7-b471-c05090c06e4e
+
+	measure 'Análogos com chuva depois' = CALCULATE ( [Análogos], vw_dias_analogos[dias_com_chuva_3_dias] >= 1 )
+		formatString: 0
+		lineageTag: 5d28d25d-a0f6-477f-802a-8462ef6f700b
+
+	measure 'Choveu depois' = FORMAT ( [Análogos com chuva depois] + 0, "0" ) & " de " & FORMAT ( [Análogos], "0" )
+		lineageTag: 270697f3-17f9-402d-9b3f-668c9b472b84
+
+	measure 'Chuva média depois' = AVERAGE ( vw_dias_analogos[chuva_3_dias] )
+		formatString: 0.0" mm"
+		lineageTag: 50645729-733c-482e-827c-af323af0f581
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Análogo mais parecido' = FORMAT ( CALCULATE ( MIN ( vw_dias_analogos[data_analogo] ), vw_dias_analogos[posicao] = 1 ), "dd/mm/yyyy" )
+		lineageTag: c351420e-c075-4dca-b725-88b7c5d5765c
+
+	measure 'Distância mais parecido' = CALCULATE ( MIN ( vw_dias_analogos[distancia] ), vw_dias_analogos[posicao] = 1 )
+		formatString: 0.00
+		lineageTag: 800afedb-09f3-4654-92a7-0e5f6ff5c729
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Titulo Analogos' =
+			
+			"Dias parecidos com "
+			    & LOWER ( SELECTEDVALUE ( vw_dias_analogos[Dia previsto], "os próximos dias" ) )
+			    & " em " & SELECTEDVALUE ( vw_municipio[nome], "selecione um município" )
+		lineageTag: a8135ad9-f705-4eb6-a6b2-8370b8bcc291
+
+	measure 'Subtitulo Analogos' =
+			
+			VAR dia = SELECTEDVALUE ( vw_dias_analogos[data_id] )
+			VAR maxima = CALCULATE ( MAX ( vw_previsao_dia[temperatura_2m_max] ), vw_previsao_dia[data_id] = dia )
+			VAR minima = CALCULATE ( MAX ( vw_previsao_dia[temperatura_2m_min] ), vw_previsao_dia[data_id] = dia )
+			VAR chuva = CALCULATE ( MAX ( vw_previsao_dia[precipitacao_total] ), vw_previsao_dia[data_id] = dia )
+			RETURN
+			    IF (
+			        ISBLANK ( dia ),
+			        "Escolha um dia para ver a previsão e os 10 dias mais parecidos",
+			        "10 dias mais próximos da previsão em 86 anos, um por ano · previsto: máx "
+			            & FORMAT ( maxima, "0" ) & " °C · mín " & FORMAT ( minima, "0" ) & " °C · "
+			            & FORMAT ( chuva, "0.0" ) & " mm"
+			    )
+		lineageTag: 351fa47e-9d53-471e-b3b8-b35b45f97f22
+
+	column municipio_id
+		dataType: int64
+		formatString: 0
+		lineageTag: f893db4e-4370-4e97-82cc-4ffcb3cad4fe
+		summarizeBy: none
+		sourceColumn: municipio_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_id
+		dataType: int64
+		formatString: 0
+		lineageTag: fd4900e5-8049-4268-801b-1a2376b610d4
+		summarizeBy: none
+		sourceColumn: data_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column antecedencia_dias
+		dataType: int64
+		formatString: 0
+		lineageTag: 2e33d6eb-3463-41a5-8176-eff6e91334f9
+		summarizeBy: sum
+		sourceColumn: antecedencia_dias
+
+		annotation SummarizationSetBy = Automatic
+
+	column posicao
+		dataType: int64
+		formatString: 0
+		lineageTag: 0f238fe4-67ac-4912-acec-2874a0512b29
+		summarizeBy: none
+		sourceColumn: posicao
+
+		annotation SummarizationSetBy = User
+
+	column distancia
+		dataType: double
+		formatString: 0.00
+		lineageTag: b1d5adf8-e057-4a49-8b60-5a1c5d1ad81d
+		summarizeBy: sum
+		sourceColumn: distancia
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column data_analogo
+		dataType: dateTime
+		formatString: dd/mm/yyyy
+		lineageTag: 1b8858e0-9fb3-4f89-95db-7047216d35ca
+		summarizeBy: none
+		sourceColumn: data_analogo
+
+		variation Variation
+			isDefault
+			relationship: e1ca1c37-c47d-4b60-b41a-cc107dd2e61b
+			defaultHierarchy: LocalDateTable_90c5ff8a-62a4-48d4-9152-870ad1ca780f.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ano_analogo
+		dataType: int64
+		formatString: 0
+		lineageTag: 35862411-339a-43ef-81a6-a5568d9b42b7
+		summarizeBy: none
+		sourceColumn: ano_analogo
+
+		annotation SummarizationSetBy = User
+
+	column estacao_analogo
+		dataType: string
+		lineageTag: c3199b73-69a3-4ee5-b618-04d7e1fc8c4c
+		summarizeBy: none
+		sourceColumn: estacao_analogo
+
+		annotation SummarizationSetBy = Automatic
+
+	column temperatura_2m_max
+		dataType: double
+		formatString: 0.0
+		lineageTag: 13b09753-c10c-469f-bcb5-c21a56506c27
+		summarizeBy: sum
+		sourceColumn: temperatura_2m_max
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column temperatura_2m_min
+		dataType: double
+		formatString: 0.0
+		lineageTag: 20c2b253-3e1c-4e61-8d3a-9fa2924b71be
+		summarizeBy: sum
+		sourceColumn: temperatura_2m_min
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column precipitacao_total
+		dataType: double
+		formatString: 0.0
+		lineageTag: fbbdc5dd-b933-40e7-b912-b9c2392878ec
+		summarizeBy: sum
+		sourceColumn: precipitacao_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column velocidade_vento_10m_max
+		dataType: double
+		lineageTag: b647aa94-5b98-422b-8eac-1fb080d0f459
+		summarizeBy: sum
+		sourceColumn: velocidade_vento_10m_max
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column radiacao_ondas_curtas_total
+		dataType: double
+		lineageTag: 094d7316-423d-481b-9c1c-1a559a5b31d3
+		summarizeBy: sum
+		sourceColumn: radiacao_ondas_curtas_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column chuva_3_dias
+		dataType: double
+		formatString: 0.0
+		lineageTag: 38e339cf-3ea8-4aca-a0dc-a01e06a41891
+		summarizeBy: sum
+		sourceColumn: chuva_3_dias
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column dias_com_chuva_3_dias
+		dataType: int64
+		formatString: 0
+		lineageTag: 82fce615-af56-4519-8afe-e46fc4df0cd6
+		summarizeBy: sum
+		sourceColumn: dias_com_chuva_3_dias
+
+		annotation SummarizationSetBy = Automatic
+
+	column temp_max_media_3_dias
+		dataType: double
+		lineageTag: 3688c14a-87b5-4e1c-903a-cd076b3bc9e2
+		summarizeBy: sum
+		sourceColumn: temp_max_media_3_dias
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dt_calculo
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 14ff4634-6028-4e49-b1e1-f779490b8c45
+		summarizeBy: none
+		sourceColumn: dt_calculo
+
+		variation Variation
+			isDefault
+			relationship: ba0b3307-98e8-410e-bd26-f4652f790dcb
+			defaultHierarchy: LocalDateTable_12ec61c1-f72b-4e5d-8df8-407d4042074e.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Dia previsto' =
+			
+			VAR antecedencia = vw_dias_analogos[antecedencia_dias]
+			RETURN
+			    SWITCH (
+			        antecedencia,
+			        0, "Hoje",
+			        1, "Amanhã",
+			        LOWER ( LEFT ( RELATED ( vw_data[nome_dia_semana] ), 3 ) ) & " " & FORMAT ( RELATED ( vw_data[dia] ), "00" )
+			    )
+		lineageTag: ae4fea57-3554-48d2-bf29-0d6b6ad72ba5
+		summarizeBy: none
+		sortByColumn: antecedencia_dias
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Década análogo' = INT ( vw_dias_analogos[ano_analogo] / 10 ) * 10
+		formatString: 0
+		lineageTag: b12590be-e97d-441d-8e92-bd2a11a4d130
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+	partition vw_dias_analogos = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database(Servidor, "ClimaRMBH"),
+				    bi_vw_dias_analogos = Fonte{[Schema="bi",Item="vw_dias_analogos"]}[Data]
+				in
+				    bi_vw_dias_analogos
+

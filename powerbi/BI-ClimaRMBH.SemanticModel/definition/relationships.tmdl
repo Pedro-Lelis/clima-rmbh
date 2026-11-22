@@ -1,0 +1,122 @@
+relationship 70ae6ac9-89d4-42fb-a287-1d92cbc57b2f
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_condicao_atual.data_hora_local
+	toColumn: LocalDateTable_dece138a-b6f3-468d-8761-59c5bd7ebee6.Date
+
+relationship 523b3eed-9935-421a-8c05-baaff9fa48c5
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_condicao_atual.dt_carga
+	toColumn: LocalDateTable_989b4eee-1b07-4e35-ba92-f4f95a8ef833.Date
+
+relationship 7197f328-07ec-4764-a637-e69aed4d895b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_execucoes.dt_inicio
+	toColumn: LocalDateTable_1ef5b9f9-4a81-498a-b28f-7940ab710a53.Date
+
+relationship eaca5fab-087b-4500-9cca-e4045800820e
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_execucoes.dt_fim
+	toColumn: LocalDateTable_f8908196-19b3-4e0e-a8a9-3122704f3a44.Date
+
+relationship a0dc0047-104e-4728-bd47-4b1dff77ddf4
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_previsao_dia.nascer_sol
+	toColumn: LocalDateTable_839a8d88-be81-424c-97da-5003b11892b9.Date
+
+relationship 5e33b5df-6812-45bb-ab1c-556d5a630a4b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_previsao_dia.por_sol
+	toColumn: LocalDateTable_87e021dd-d821-4ec9-aaa2-2b19df491345.Date
+
+relationship 115fb559-df6d-4cb6-a542-e59674535031
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_previsao_hora.data_hora_local
+	toColumn: LocalDateTable_82659378-0c10-45b7-ba07-13a41803bc50.Date
+
+relationship f61eb367-00de-4fee-acf4-e2e6260c4024
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_previsao_x_realizado.data_coleta
+	toColumn: LocalDateTable_271a9842-2d5c-4d82-ad17-9d14225df338.Date
+
+relationship 48cc9868-d507-5db3-ed42-f11465103044
+	fromColumn: vw_condicao_atual.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship 0ec26581-480f-31b2-f46c-2a959d231b9c
+	fromColumn: vw_previsao_hora.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship 49e1bff8-7558-35ee-c7b4-00ab9037301a
+	fromColumn: vw_previsao_dia.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship 2041fe0b-979f-3a05-98fc-97e36b3d805b
+	fromColumn: vw_historico_dia.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship 860d0663-dab4-b496-c9f7-62c58127f921
+	fromColumn: vw_historico_ano.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship d051b497-63b9-53a1-6759-da2367670329
+	fromColumn: vw_previsao_x_realizado.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship f243a36b-7565-c236-1cde-e4f98f16264d
+	fromColumn: vw_condicao_atual.data_id
+	toColumn: vw_data.data_id
+
+relationship f765ae6f-6081-61d4-6a78-c33aa1b612f8
+	fromColumn: vw_previsao_hora.data_id
+	toColumn: vw_data.data_id
+
+relationship 6596f1f6-a7eb-5f12-c6d8-316670a420e9
+	fromColumn: vw_previsao_dia.data_id
+	toColumn: vw_data.data_id
+
+relationship 1ce742ad-bfb8-f3de-2dd7-99d5abae3c4f
+	fromColumn: vw_historico_dia.data_id
+	toColumn: vw_data.data_id
+
+relationship f1ffe77e-034e-701a-bb19-571e822807dc
+	fromColumn: vw_execucoes.data_id
+	toColumn: vw_data.data_id
+
+relationship 549d4213-7796-1d4e-389b-2ac0a56f3e93
+	fromColumn: vw_condicao_atual.codigo_tempo
+	toColumn: vw_codigo_tempo.codigo_tempo
+
+relationship 32ba0002-9f56-e78c-1f06-67d8374ab3b7
+	fromColumn: vw_previsao_hora.codigo_tempo
+	toColumn: vw_codigo_tempo.codigo_tempo
+
+relationship 6f034691-808c-3477-13ea-b4728560c343
+	fromColumn: vw_previsao_dia.codigo_tempo
+	toColumn: vw_codigo_tempo.codigo_tempo
+
+relationship c3c89df1-e439-d7a0-71e6-d0891cf68336
+	fromColumn: vw_historico_dia.codigo_tempo
+	toColumn: vw_codigo_tempo.codigo_tempo
+
+relationship c71e3fe7-81ae-b577-113f-f9289334e015
+	fromColumn: vw_previsao_x_realizado.data_id
+	toColumn: vw_data.data_id
+
+relationship e1ca1c37-c47d-4b60-b41a-cc107dd2e61b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_dias_analogos.data_analogo
+	toColumn: LocalDateTable_90c5ff8a-62a4-48d4-9152-870ad1ca780f.Date
+
+relationship ba0b3307-98e8-410e-bd26-f4652f790dcb
+	joinOnDateBehavior: datePartOnly
+	fromColumn: vw_dias_analogos.dt_calculo
+	toColumn: LocalDateTable_12ec61c1-f72b-4e5d-8df8-407d4042074e.Date
+
+relationship 2e620152-fcfd-98f9-6471-61efa0a278a9
+	fromColumn: vw_dias_analogos.municipio_id
+	toColumn: vw_municipio.municipio_id
+
+relationship 5afafa86-31fb-142a-ae74-bd1e33953efe
+	fromColumn: vw_dias_analogos.data_id
+	toColumn: vw_data.data_id
+

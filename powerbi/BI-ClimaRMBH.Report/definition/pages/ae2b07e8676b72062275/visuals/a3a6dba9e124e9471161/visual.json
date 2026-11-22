@@ -1,0 +1,231 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "a3a6dba9e124e9471161",
+  "position": {
+    "x": 250,
+    "y": 266,
+    "z": 6000,
+    "height": 211,
+    "width": 1000,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "lineClusteredColumnComboChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_previsao_hora"
+                    }
+                  },
+                  "Property": "data_hora_local"
+                }
+              },
+              "queryRef": "vw_previsao_hora.data_hora_local",
+              "nativeQueryRef": "data_hora_local",
+              "active": true
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "vw_previsao_hora"
+                        }
+                      },
+                      "Property": "probabilidade_precipitacao"
+                    }
+                  },
+                  "Function": 1
+                }
+              },
+              "queryRef": "Sum(vw_previsao_hora.probabilidade_precipitacao)",
+              "nativeQueryRef": "Chance de chuva (%)",
+              "displayName": "Chance de chuva (%)"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "vw_previsao_hora"
+                        }
+                      },
+                      "Property": "precipitacao"
+                    }
+                  },
+                  "Function": 1
+                }
+              },
+              "queryRef": "Sum(vw_previsao_hora.precipitacao)",
+              "nativeQueryRef": "Chuva (mm)",
+              "displayName": "Chuva (mm)"
+            }
+          ]
+        },
+        "Y2": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "vw_previsao_hora"
+                        }
+                      },
+                      "Property": "temperatura_2m"
+                    }
+                  },
+                  "Function": 1
+                }
+              },
+              "queryRef": "Sum(vw_previsao_hora.temperatura_2m)",
+              "nativeQueryRef": "Temperatura (°C)",
+              "displayName": "Temperatura (°C)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "vw_previsao_hora"
+                  }
+                },
+                "Property": "data_hora_local"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "valueAxis": [
+        {
+          "properties": {
+            "roundRange": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "invertAxis": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "start": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Próximas 48 horas'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "45667ef02a7ae31b087c",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_previsao_hora"
+              }
+            },
+            "Property": "Próximas 48h"
+          }
+        },
+        "type": "Categorical",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "v",
+              "Entity": "vw_previsao_hora",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "In": {
+                  "Expressions": [
+                    {
+                      "Column": {
+                        "Expression": {
+                          "SourceRef": {
+                            "Source": "v"
+                          }
+                        },
+                        "Property": "Próximas 48h"
+                      }
+                    }
+                  ],
+                  "Values": [
+                    [
+                      {
+                        "Literal": {
+                          "Value": "true"
+                        }
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      }
+    ]
+  }
+}

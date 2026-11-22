@@ -1,0 +1,104 @@
+table vw_execucoes
+	lineageTag: ff34711c-5bf8-44cd-932b-acc577377f39
+
+	column execucao_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 0b471d2c-9be0-41a3-ba96-d2929c02553d
+		summarizeBy: sum
+		sourceColumn: execucao_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column modo
+		dataType: string
+		lineageTag: ef949a8b-9800-481b-8f20-a70799d05797
+		summarizeBy: none
+		sourceColumn: modo
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: bebfb379-cfe6-48d4-949f-87b2eaaf88fe
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 417acb50-65bf-42b8-98b1-e4912b201aac
+		summarizeBy: none
+		sourceColumn: data_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column dt_inicio
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: b2b1efd8-e50e-4405-bc55-8dc5c9d4b72a
+		summarizeBy: none
+		sourceColumn: dt_inicio
+
+		variation Variation
+			isDefault
+			relationship: 7197f328-07ec-4764-a637-e69aed4d895b
+			defaultHierarchy: LocalDateTable_1ef5b9f9-4a81-498a-b28f-7940ab710a53.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column dt_fim
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 42fac521-36f5-4198-8f43-7a1a83da0e04
+		summarizeBy: none
+		sourceColumn: dt_fim
+
+		variation Variation
+			isDefault
+			relationship: eaca5fab-087b-4500-9cca-e4045800820e
+			defaultHierarchy: LocalDateTable_f8908196-19b3-4e0e-a8a9-3122704f3a44.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column duracao_s
+		dataType: int64
+		formatString: 0
+		lineageTag: 4449b9d4-7508-412f-9842-e8d6fb6cf7b7
+		summarizeBy: sum
+		sourceColumn: duracao_s
+
+		annotation SummarizationSetBy = Automatic
+
+	column linhas_hora
+		dataType: int64
+		formatString: 0
+		lineageTag: 52409dfd-27b8-4f4a-8972-9e774786480e
+		summarizeBy: sum
+		sourceColumn: linhas_hora
+
+		annotation SummarizationSetBy = Automatic
+
+	column linhas_dia
+		dataType: int64
+		formatString: 0
+		lineageTag: 7051db29-3f97-410f-8de9-03a2425c07e7
+		summarizeBy: sum
+		sourceColumn: linhas_dia
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_execucoes = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_execucoes"]}[Data]
+				in
+				  #"Navegação 1"
+

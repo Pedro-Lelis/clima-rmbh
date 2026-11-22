@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "BI-ClimaRMBH"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "52839b1c-64a8-4448-8f1e-9670a20562e7"
+  }
+}

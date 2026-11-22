@@ -1,0 +1,144 @@
+table vw_historico_ano
+	lineageTag: b27e492d-b4d6-4b32-8919-eb9cf759f9e3
+
+	column municipio_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ab2c3ed-3937-428d-be4a-97ac0faf6138
+		summarizeBy: none
+		sourceColumn: municipio_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column ano
+		dataType: int64
+		formatString: 0
+		lineageTag: c7fa17fe-3cd7-415f-9ffc-137641b2cf51
+		summarizeBy: none
+		sourceColumn: ano
+
+		annotation SummarizationSetBy = User
+
+	column decada
+		dataType: int64
+		formatString: 0
+		lineageTag: d90562c4-ac84-4780-ac44-a5f01562178d
+		summarizeBy: none
+		sourceColumn: decada
+
+		annotation SummarizationSetBy = User
+
+	column dias_no_ano
+		dataType: int64
+		formatString: 0
+		lineageTag: 059db37d-6361-4376-b643-54f20a6f129f
+		summarizeBy: sum
+		sourceColumn: dias_no_ano
+
+		annotation SummarizationSetBy = Automatic
+
+	column ano_completo
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: b72efe27-cc0b-43d4-8513-50503c492886
+		summarizeBy: none
+		sourceColumn: ano_completo
+
+		annotation SummarizationSetBy = Automatic
+
+	column temp_media
+		dataType: double
+		lineageTag: 1bb8611e-34a5-4017-bc74-691bdce94ec4
+		summarizeBy: sum
+		sourceColumn: temp_media
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column temp_media_1961_1990
+		dataType: double
+		lineageTag: a95c24ba-e744-4cc7-9507-4c4601f818b3
+		summarizeBy: sum
+		sourceColumn: temp_media_1961_1990
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column anomalia_temp
+		dataType: double
+		lineageTag: ffeeff6a-f158-49b3-80e2-dc4b23a77d9d
+		summarizeBy: sum
+		sourceColumn: anomalia_temp
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column temp_max_ano
+		dataType: double
+		lineageTag: dae6b00a-a768-4e4a-951f-a4b3bdfe5250
+		summarizeBy: sum
+		sourceColumn: temp_max_ano
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column temp_min_ano
+		dataType: double
+		lineageTag: e57b59ce-12f4-42d6-914f-3d96181ebf6e
+		summarizeBy: sum
+		sourceColumn: temp_min_ano
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column chuva_total
+		dataType: double
+		lineageTag: 2a98e6f0-8b1b-4991-89cb-c1d3dc606cc5
+		summarizeBy: sum
+		sourceColumn: chuva_total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column dias_com_chuva
+		dataType: int64
+		formatString: 0
+		lineageTag: 5327b227-6f73-4d1e-a908-6aea13f0e326
+		summarizeBy: sum
+		sourceColumn: dias_com_chuva
+
+		annotation SummarizationSetBy = Automatic
+
+	column dias_max_acima_30
+		dataType: int64
+		formatString: 0
+		lineageTag: 7973ebc0-3514-4032-aa68-38b878015f72
+		summarizeBy: sum
+		sourceColumn: dias_max_acima_30
+
+		annotation SummarizationSetBy = Automatic
+
+	column dias_min_abaixo_10
+		dataType: int64
+		formatString: 0
+		lineageTag: 9b2abf10-ea26-4976-ab00-789d5235ce49
+		summarizeBy: sum
+		sourceColumn: dias_min_abaixo_10
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_historico_ano = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_historico_ano"]}[Data]
+				in
+				  #"Navegação 1"
+

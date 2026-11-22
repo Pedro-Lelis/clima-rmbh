@@ -1,0 +1,40 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: pt-BR
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["Servidor","vw_codigo_tempo","vw_condicao_atual","vw_data","vw_execucoes","vw_historico_ano","vw_historico_dia","vw_municipio","vw_previsao_dia","vw_previsao_hora","vw_previsao_x_realizado","vw_dias_analogos","Medidas"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table vw_codigo_tempo
+ref table vw_condicao_atual
+ref table DateTableTemplate_bc1064a2-d570-4e01-9ede-3a2933029b12
+ref table LocalDateTable_dece138a-b6f3-468d-8761-59c5bd7ebee6
+ref table LocalDateTable_989b4eee-1b07-4e35-ba92-f4f95a8ef833
+ref table vw_data
+ref table vw_execucoes
+ref table LocalDateTable_1ef5b9f9-4a81-498a-b28f-7940ab710a53
+ref table LocalDateTable_f8908196-19b3-4e0e-a8a9-3122704f3a44
+ref table vw_historico_ano
+ref table vw_historico_dia
+ref table vw_municipio
+ref table vw_previsao_dia
+ref table LocalDateTable_839a8d88-be81-424c-97da-5003b11892b9
+ref table LocalDateTable_87e021dd-d821-4ec9-aaa2-2b19df491345
+ref table vw_previsao_hora
+ref table LocalDateTable_82659378-0c10-45b7-ba07-13a41803bc50
+ref table vw_previsao_x_realizado
+ref table LocalDateTable_271a9842-2d5c-4d82-ad17-9d14225df338
+ref table vw_dias_analogos
+ref table LocalDateTable_90c5ff8a-62a4-48d4-9152-870ad1ca780f
+ref table LocalDateTable_12ec61c1-f72b-4e5d-8df8-407d4042074e
+ref table Medidas
+
+ref cultureInfo pt-BR
+

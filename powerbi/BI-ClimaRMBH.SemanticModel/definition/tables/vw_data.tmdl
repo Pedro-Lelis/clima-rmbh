@@ -1,0 +1,189 @@
+table vw_data
+	lineageTag: 45c16e51-25eb-48d7-9e68-e23640addf57
+	dataCategory: Time
+
+	column data_id
+		dataType: int64
+		formatString: 0
+		lineageTag: b11bac24-91ee-4abe-9106-7034b9a86887
+		summarizeBy: none
+		sourceColumn: data_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column data
+		dataType: dateTime
+		isKey
+		formatString: ddd dd/mm
+		lineageTag: 70e4e22c-83b1-4a81-aaa0-1235914448a5
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	column ano
+		dataType: int64
+		formatString: 0
+		lineageTag: 2c2b02f5-2762-4d30-8c71-fbea19276c50
+		summarizeBy: none
+		sourceColumn: ano
+
+		annotation SummarizationSetBy = User
+
+	column decada
+		dataType: int64
+		formatString: 0
+		lineageTag: b23dac3c-846d-48d7-be3c-69268d12bc72
+		summarizeBy: none
+		sourceColumn: decada
+
+		annotation SummarizationSetBy = User
+
+	column decada_nome
+		dataType: string
+		lineageTag: aa19cf19-edbe-45a4-9fcc-5eaa7c67ed42
+		summarizeBy: none
+		sourceColumn: decada_nome
+		sortByColumn: decada
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column trimestre
+		dataType: int64
+		formatString: 0
+		lineageTag: db42a8ca-160d-46e8-8510-b57cb7b5f7d7
+		summarizeBy: sum
+		sourceColumn: trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes
+		dataType: int64
+		formatString: 0
+		lineageTag: 2cb72ec2-1ee3-4d0e-9546-7f56c9d8c479
+		summarizeBy: sum
+		sourceColumn: mes
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_mes
+		dataType: string
+		lineageTag: 9abe1676-8116-46d0-b67b-0a0302dcc349
+		summarizeBy: none
+		sourceColumn: nome_mes
+		sortByColumn: mes
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_mes_abrev
+		dataType: string
+		lineageTag: 1b65737d-42b7-4645-9dfa-a4c6baacfee5
+		summarizeBy: none
+		sourceColumn: nome_mes_abrev
+		sortByColumn: mes
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column ano_mes
+		dataType: int64
+		formatString: 0
+		lineageTag: ff3d7858-3560-4ef1-9356-c851057affc7
+		summarizeBy: sum
+		sourceColumn: ano_mes
+
+		annotation SummarizationSetBy = Automatic
+
+	column ano_mes_nome
+		dataType: string
+		lineageTag: 48480793-6305-4732-857e-e197502e59bc
+		summarizeBy: none
+		sourceColumn: ano_mes_nome
+		sortByColumn: ano_mes
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column dia
+		dataType: int64
+		formatString: 0
+		lineageTag: e6dd8eef-7197-4eef-aefe-8379d90a6b39
+		summarizeBy: sum
+		sourceColumn: dia
+
+		annotation SummarizationSetBy = Automatic
+
+	column dia_do_ano
+		dataType: int64
+		formatString: 0
+		lineageTag: 5c1f450c-3a67-424a-8496-03ccab366cb4
+		summarizeBy: sum
+		sourceColumn: dia_do_ano
+
+		annotation SummarizationSetBy = Automatic
+
+	column semana_iso
+		dataType: int64
+		formatString: 0
+		lineageTag: 43fcde65-4354-47bf-87f8-1ba7ad374d45
+		summarizeBy: sum
+		sourceColumn: semana_iso
+
+		annotation SummarizationSetBy = Automatic
+
+	column num_dia_semana
+		dataType: int64
+		formatString: 0
+		lineageTag: 154ae874-ade9-4047-9de0-afa4c0c41ce9
+		summarizeBy: sum
+		sourceColumn: num_dia_semana
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_dia_semana
+		dataType: string
+		lineageTag: 812bdc0f-7e1f-4a63-9de7-880c1e60eceb
+		summarizeBy: none
+		sourceColumn: nome_dia_semana
+		sortByColumn: num_dia_semana
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column eh_fim_de_semana
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: f8e258b4-394a-4751-9c91-05d044eec7b0
+		summarizeBy: none
+		sourceColumn: eh_fim_de_semana
+
+		annotation SummarizationSetBy = Automatic
+
+	column estacao
+		dataType: string
+		lineageTag: d6646e91-4306-4897-8357-de1813c17280
+		summarizeBy: none
+		sourceColumn: estacao
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_data = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_data"]}[Data]
+				in
+				  #"Navegação 1"
+

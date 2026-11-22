@@ -1,0 +1,253 @@
+table Medidas
+	lineageTag: 388d5b7d-07ae-4631-abf0-37184d1da717
+
+	measure 'Titulo Agora' = "Agora em " & SELECTEDVALUE ( vw_municipio[nome], "selecione um município" )
+		lineageTag: f30d2cff-097b-46f4-bd64-c871efb66998
+
+	measure 'Ultima Leitura' = "Última hora registrada: " & FORMAT ( MAX ( vw_condicao_atual[data_hora_local] ), "dd/mm HH:mm" )
+		lineageTag: 3d90326a-1be8-4076-a157-265b278a555b
+
+	measure Temperatura = MAX ( vw_condicao_atual[temperatura_2m] )
+		formatString: 0.0" °C"
+		lineageTag: 6aa4f071-8568-44b1-8f3e-028ac2f0ca3c
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Sensação térmica' = MAX ( vw_condicao_atual[sensacao_termica] )
+		formatString: 0.0" °C"
+		lineageTag: c5990117-b0c3-4442-b2f3-b31afa532308
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure Umidade = MAX ( vw_condicao_atual[umidade_relativa_2m] )
+		formatString: 0"%"
+		lineageTag: a1948e06-bc19-40da-ab2b-e87fbc8dce19
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure Vento = MAX ( vw_condicao_atual[velocidade_vento_10m] )
+		formatString: 0" km/h"
+		lineageTag: 91297cbc-7cb5-4192-8eb4-58fcd28bd563
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure Rajada = MAX ( vw_condicao_atual[rajada_vento_10m] )
+		formatString: 0" km/h"
+		lineageTag: 22ba6944-d7e8-4bb1-9926-c9cd1adc8eb0
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Índice UV' = MAX ( vw_condicao_atual[indice_uv] )
+		formatString: 0.0
+		lineageTag: 5f44b0b9-8015-4d7e-98a9-7b65049bcbc8
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure Condição =
+			
+			VAR codigo = MAX ( vw_condicao_atual[codigo_tempo] )
+			RETURN LOOKUPVALUE ( vw_codigo_tempo[descricao], vw_codigo_tempo[codigo_tempo], codigo )
+		lineageTag: 4e5a3d68-9004-496d-86a0-320003a4008f
+
+	measure Orvalho = MAX ( vw_condicao_atual[ponto_orvalho_2m] )
+		formatString: 0.0" °C"
+		lineageTag: 8d83f611-e92f-4102-ac6d-e8437a34d605
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Condição do dia' =
+			
+			VAR codigo = MAX ( vw_previsao_dia[codigo_tempo] )
+			RETURN LOOKUPVALUE ( vw_codigo_tempo[descricao], vw_codigo_tempo[codigo_tempo], codigo )
+		lineageTag: b9602f13-d460-45c4-9264-9ee2dab8398d
+
+	measure 'Titulo Historico' =
+			
+			VAR anos = CALCULATE ( DISTINCTCOUNT ( vw_historico_ano[ano] ), vw_historico_ano[ano_completo] = TRUE () )
+			RETURN anos & " anos em " & SELECTEDVALUE ( vw_municipio[nome], "selecione um município" )
+		lineageTag: d1d3cbe3-2764-4a0e-b3bb-47a0f886f3bf
+
+	measure 'Subtitulo Historico' =
+			
+			VAR primeiro = CALCULATE ( MIN ( vw_historico_ano[ano] ), vw_historico_ano[ano_completo] = TRUE () )
+			VAR ultimo   = CALCULATE ( MAX ( vw_historico_ano[ano] ), vw_historico_ano[ano_completo] = TRUE () )
+			RETURN "Anos completos de " & primeiro & " a " & ultimo & " · referência: média de 1961–1990"
+		lineageTag: 625291aa-5096-49f0-819b-2c9331653626
+
+	measure Anomalia = AVERAGE ( vw_historico_ano[anomalia_temp] )
+		formatString: +0.0" °C";-0.0" °C";0.0" °C"
+		lineageTag: e4c5405c-ff12-42eb-bb82-afbcc62d483a
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure Faixa = IF ( NOT ISBLANK ( [Anomalia] ), 1 )
+		formatString: 0
+		lineageTag: 9c813da4-0963-404c-a762-a7596b7b0d38
+
+	measure 'Último ano completo' = CALCULATE ( MAX ( vw_historico_ano[ano] ), vw_historico_ano[ano_completo] = TRUE () )
+		formatString: 0
+		lineageTag: 78403b62-2cbf-4d82-a6e3-1e53d2027a45
+
+	measure 'Média 1961-1990' = AVERAGE ( vw_historico_ano[temp_media_1961_1990] )
+		formatString: 0.0" °C"
+		lineageTag: 347cafad-a35d-47f5-b739-6f4f2eebc63c
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Média última década' =
+			
+			VAR ultimo = [Último ano completo]
+			RETURN CALCULATE ( AVERAGE ( vw_historico_ano[temp_media] ), vw_historico_ano[ano] > ultimo - 10 )
+		formatString: 0.0" °C"
+		lineageTag: efc0c17c-a5fe-403e-8346-ff2c4b9a9b8c
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Anomalia última década' =
+			
+			VAR ultimo = [Último ano completo]
+			RETURN CALCULATE ( [Anomalia], vw_historico_ano[ano] > ultimo - 10 )
+		formatString: +0.0" °C";-0.0" °C";0.0" °C"
+		lineageTag: 0cfcb5a8-8a50-4d9f-850e-30afb3aa8597
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Anomalia primeira década' =
+			
+			VAR primeiro = CALCULATE ( MIN ( vw_historico_ano[ano] ), vw_historico_ano[ano_completo] = TRUE () )
+			RETURN CALCULATE ( [Anomalia], vw_historico_ano[ano] < primeiro + 10 )
+		formatString: +0.0" °C";-0.0" °C";0.0" °C"
+		lineageTag: c0e43498-24e9-47b9-87f7-1191fe6f1401
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Ano mais quente' =
+			
+			VAR topo = TOPN ( 1, VALUES ( vw_historico_ano[ano] ), [Anomalia], DESC )
+			RETURN MAXX ( topo, vw_historico_ano[ano] )
+		formatString: 0
+		lineageTag: 3ff5d415-fe06-44df-9c84-ae251b4df704
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Anomalia ano mais quente' =
+			
+			VAR ano = [Ano mais quente]
+			RETURN CALCULATE ( [Anomalia], vw_historico_ano[ano] = ano )
+		formatString: +0.0" °C";-0.0" °C";0.0" °C"
+		lineageTag: db712d93-d78e-4890-86bf-d194b1e16ee8
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Dias acima de 30' =
+			
+			VAR ultimo = [Último ano completo]
+			RETURN CALCULATE ( AVERAGE ( vw_historico_ano[dias_max_acima_30] ), vw_historico_ano[ano] > ultimo - 10 )
+		formatString: 0" por ano"
+		lineageTag: a8eff0fc-70fc-4866-a096-dad330efe5ff
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Dias acima de 30 referência' =
+			
+			CALCULATE ( AVERAGE ( vw_historico_ano[dias_max_acima_30] ), vw_historico_ano[ano] >= 1961, vw_historico_ano[ano] <= 1990 )
+		formatString: 0" por ano"
+		lineageTag: 247e79f6-f24a-4397-b047-7e7bf0c7c282
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Anomalia média 10 anos' =
+			
+			VAR ano      = MAX ( vw_historico_ano[ano] )
+			VAR primeiro = CALCULATE ( MIN ( vw_historico_ano[ano] ), REMOVEFILTERS ( vw_historico_ano[ano] ) )
+			RETURN
+			    IF (
+			        ano >= primeiro + 9,
+			        CALCULATE ( [Anomalia], vw_historico_ano[ano] > ano - 10, vw_historico_ano[ano] <= ano )
+			    )
+		lineageTag: 949875b6-7147-49c9-839b-392dcb972fe3
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Titulo Previsao' = "Previsão × real em " & SELECTEDVALUE ( vw_municipio[nome], "selecione um município" )
+		lineageTag: 0b4f0914-ba9f-4a61-87bb-3fa597a9f459
+
+	measure 'Subtitulo Previsao' =
+			
+			"Previsões guardadas desde " & FORMAT ( MIN ( vw_previsao_x_realizado[data_coleta] ), "dd/mm" )
+			    & " · viés positivo = previsão acima do real"
+		lineageTag: 52af3d95-4aca-4f1e-8842-828bfa1da394
+
+	measure 'Erro médio máx' = AVERAGEX ( vw_previsao_x_realizado, ABS ( vw_previsao_x_realizado[erro_temp_max] ) )
+		formatString: 0.0" °C"
+		lineageTag: d23c581e-2625-4b23-a0ae-36c859b9c181
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Erro médio mín' = AVERAGEX ( vw_previsao_x_realizado, ABS ( vw_previsao_x_realizado[erro_temp_min] ) )
+		formatString: 0.0" °C"
+		lineageTag: 295a2c7b-4aec-45a7-954f-6156b50e0b5e
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Viés máx' = AVERAGE ( vw_previsao_x_realizado[erro_temp_max] )
+		formatString: +0.0" °C";-0.0" °C";0.0" °C"
+		lineageTag: 51ff936a-d48b-4a4f-8424-285d7f6e29bc
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Viés mín' = AVERAGE ( vw_previsao_x_realizado[erro_temp_min] )
+		formatString: +0.0" °C";-0.0" °C";0.0" °C"
+		lineageTag: f9ca16a2-12e4-4e00-aa5b-8495e013b261
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Acerto de chuva' =
+			
+			DIVIDE (
+			    COUNTROWS ( FILTER ( vw_previsao_x_realizado,
+			        vw_previsao_x_realizado[choveu_previsto] = vw_previsao_x_realizado[choveu_realizado] ) ),
+			    COUNTROWS ( vw_previsao_x_realizado )
+			)
+		formatString: 0%;-0%;0%
+		lineageTag: aee6c59f-e7d4-4fbe-95a9-e562044350b5
+
+	measure 'Previsões avaliadas' = COUNTROWS ( vw_previsao_x_realizado )
+		formatString: 0
+		lineageTag: 80a55442-4a8d-4850-8a50-f652cd1671c6
+
+	measure 'Dias avaliados' = DISTINCTCOUNT ( vw_previsao_x_realizado[data_id] )
+		formatString: 0
+		lineageTag: 5b25b77d-b061-48ba-8eee-907587a1970f
+
+	measure 'Maior antecedência' = MAX ( vw_previsao_x_realizado[antecedencia_dias] )
+		formatString: 0" dias"
+		lineageTag: b7c4a087-123b-44a3-ac6b-d3ba04ef3959
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Máx prevista' = AVERAGE ( vw_previsao_x_realizado[temp_max_prevista] )
+		formatString: 0.0" °C"
+		lineageTag: 4c7fa941-7b74-4f63-8dcb-4b5e531c906e
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	measure 'Máx realizada' = AVERAGE ( vw_previsao_x_realizado[temp_max_realizada] )
+		formatString: 0.0" °C"
+		lineageTag: 181043a6-a0e7-4298-9ffa-f20d59717127
+
+		annotation PBI_FormatHint = {"isCustom":true}
+
+	partition Medidas = m
+		mode: import
+		source =
+				let
+				  Origem = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [#"Coluna 1" = _t]),
+				    #"Colunas Removidas" = Table.RemoveColumns(Origem,{"Coluna 1"})
+				in
+				  #"Colunas Removidas"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,200 @@
+table vw_previsao_hora
+	lineageTag: 03678c0a-3b99-44ba-affe-a7883bc644d9
+
+	column municipio_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 5b58ca1b-8b04-4d0e-a0d7-18f750ab8000
+		summarizeBy: none
+		sourceColumn: municipio_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_id
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 61eb8889-1cdb-4035-b8a3-667a79c14d5f
+		summarizeBy: none
+		sourceColumn: data_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column hora
+		dataType: int64
+		formatString: 0
+		lineageTag: 6a90f919-f9df-4ba1-ba19-b00f80911704
+		summarizeBy: sum
+		sourceColumn: hora
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_hora_local
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: c465fff2-36dc-4980-b3f4-009271bc989f
+		summarizeBy: none
+		sourceColumn: data_hora_local
+
+		variation Variation
+			isDefault
+			relationship: 115fb559-df6d-4cb6-a542-e59674535031
+			defaultHierarchy: LocalDateTable_82659378-0c10-45b7-ba07-13a41803bc50.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column eh_previsao
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 05b55a5a-eb85-4649-ad98-cafd80ded9a1
+		summarizeBy: none
+		sourceColumn: eh_previsao
+
+		annotation SummarizationSetBy = Automatic
+
+	column codigo_tempo
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0a291bb1-3b59-4ebb-b910-a4bac7a1719b
+		summarizeBy: none
+		sourceColumn: codigo_tempo
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column temperatura_2m
+		dataType: double
+		lineageTag: 7a8a7103-ed23-45a4-8949-3e8a6d68034a
+		summarizeBy: sum
+		sourceColumn: temperatura_2m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column sensacao_termica
+		dataType: double
+		lineageTag: d3cfe298-d84a-461b-b9f8-451a09a70a70
+		summarizeBy: sum
+		sourceColumn: sensacao_termica
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column umidade_relativa_2m
+		dataType: double
+		lineageTag: 8d131fc1-6bab-4aa9-b1b8-8007bec97b0d
+		summarizeBy: sum
+		sourceColumn: umidade_relativa_2m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column precipitacao
+		dataType: double
+		lineageTag: 05471ff4-e839-4b71-9aa3-f5dfd5edeaea
+		summarizeBy: sum
+		sourceColumn: precipitacao
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column probabilidade_precipitacao
+		dataType: int64
+		formatString: 0
+		lineageTag: e4ac5efb-5633-4c2f-98e0-c3e3400e4c4f
+		summarizeBy: sum
+		sourceColumn: probabilidade_precipitacao
+
+		annotation SummarizationSetBy = Automatic
+
+	column velocidade_vento_10m
+		dataType: double
+		lineageTag: f2dddac3-25af-45eb-a480-d78dff6a4a01
+		summarizeBy: sum
+		sourceColumn: velocidade_vento_10m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rajada_vento_10m
+		dataType: double
+		lineageTag: cc9c1e6b-e81b-4a75-9597-8e5655baca00
+		summarizeBy: sum
+		sourceColumn: rajada_vento_10m
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column direcao_vento_10m
+		dataType: int64
+		formatString: 0
+		lineageTag: fe705c0a-fa21-414a-b220-fcf8b5641945
+		summarizeBy: sum
+		sourceColumn: direcao_vento_10m
+
+		annotation SummarizationSetBy = Automatic
+
+	column cobertura_nuvens
+		dataType: double
+		lineageTag: 25b4561f-6af8-409a-90a4-35d4e87c1112
+		summarizeBy: sum
+		sourceColumn: cobertura_nuvens
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column indice_uv
+		dataType: double
+		lineageTag: 2482d267-8bb0-47d0-8bca-5ba1b77e90f3
+		summarizeBy: sum
+		sourceColumn: indice_uv
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column radiacao_ondas_curtas
+		dataType: double
+		lineageTag: d20eb455-0e10-4df6-8f64-362ed072017f
+		summarizeBy: sum
+		sourceColumn: radiacao_ondas_curtas
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Próximas 48h' =
+			
+			VAR agora = MAX ( vw_condicao_atual[data_hora_local] )
+			RETURN
+			    vw_previsao_hora[data_hora_local] >= agora
+			        && vw_previsao_hora[data_hora_local] < agora + 2
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 1c48c21a-4db3-4f3d-9bcb-7f0f9a70f428
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_previsao_hora = m
+		mode: import
+		source =
+				let
+				  Origem = Sql.Database(Servidor, "ClimaRMBH"),
+				  #"Navegação 1" = Origem{[Schema = "bi", Item = "vw_previsao_hora"]}[Data]
+				in
+				  #"Navegação 1"
+

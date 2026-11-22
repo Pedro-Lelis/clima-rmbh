@@ -1,0 +1,5 @@
+expression Servidor = "clima-vps" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 17582cc9-53aa-4847-a336-58b2ed8c59b2
+
+	annotation PBI_ResultType = Text
+

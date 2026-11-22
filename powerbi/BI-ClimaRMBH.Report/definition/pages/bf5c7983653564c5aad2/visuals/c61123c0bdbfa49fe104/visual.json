@@ -1,0 +1,494 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "c61123c0bdbfa49fe104",
+  "position": {
+    "x": 250,
+    "y": 266,
+    "z": 6000,
+    "height": 438,
+    "width": 492,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_dias_analogos"
+                    }
+                  },
+                  "Property": "posicao"
+                }
+              },
+              "queryRef": "vw_dias_analogos.posicao",
+              "nativeQueryRef": "#",
+              "displayName": "#"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_dias_analogos"
+                    }
+                  },
+                  "Property": "data_analogo"
+                }
+              },
+              "queryRef": "vw_dias_analogos.data_analogo",
+              "nativeQueryRef": "Dia",
+              "displayName": "Dia"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_dias_analogos"
+                    }
+                  },
+                  "Property": "temperatura_2m_max"
+                }
+              },
+              "queryRef": "vw_dias_analogos.temperatura_2m_max",
+              "nativeQueryRef": "Máx",
+              "displayName": "Máx"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_dias_analogos"
+                    }
+                  },
+                  "Property": "temperatura_2m_min"
+                }
+              },
+              "queryRef": "vw_dias_analogos.temperatura_2m_min",
+              "nativeQueryRef": "Mín",
+              "displayName": "Mín"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_dias_analogos"
+                    }
+                  },
+                  "Property": "precipitacao_total"
+                }
+              },
+              "queryRef": "vw_dias_analogos.precipitacao_total",
+              "nativeQueryRef": "Chuva",
+              "displayName": "Chuva"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "vw_dias_analogos"
+                    }
+                  },
+                  "Property": "chuva_3_dias"
+                }
+              },
+              "queryRef": "vw_dias_analogos.chuva_3_dias",
+              "nativeQueryRef": "Depois",
+              "displayName": "Depois"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "vw_dias_analogos"
+                  }
+                },
+                "Property": "posicao"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "grid": [
+        {
+          "properties": {
+            "rowPadding": {
+              "expr": {
+                "Literal": {
+                  "Value": "7D"
+                }
+              }
+            },
+            "gridHorizontal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "gridHorizontalWeight": {
+              "expr": {
+                "Literal": {
+                  "Value": "0D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "30D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.posicao"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.data_analogo"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "60D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.temperatura_2m_max"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "60D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.temperatura_2m_min"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "70D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.precipitacao_total"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "130D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.chuva_3_dias"
+          }
+        }
+      ],
+      "columnFormatting": [
+        {
+          "properties": {
+            "dataBars": {
+              "minValue": {
+                "expr": {
+                  "Literal": {
+                    "Value": "0D"
+                  }
+                }
+              },
+              "positiveColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#2DD4BF'"
+                      }
+                    }
+                  }
+                }
+              },
+              "negativeColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#2DD4BF'"
+                      }
+                    }
+                  }
+                }
+              },
+              "axisColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#2DD4BF'"
+                      }
+                    }
+                  }
+                }
+              },
+              "reverseDirection": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "totalMatchingOption": {
+                "expr": {
+                  "Literal": {
+                    "Value": "1L"
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "vw_dias_analogos.chuva_3_dias"
+          }
+        }
+      ],
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Os 10 dias mais parecidos'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Tempo no dia análogo · Depois = chuva nos 3 dias seguintes (mm)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "af788dc16e77678db4f4",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_dias_analogos"
+              }
+            },
+            "Property": "posicao"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "f2e916b7219ba24bfcbe",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_dias_analogos"
+              }
+            },
+            "Property": "data_analogo"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "563778ebcfbeee9ded56",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_dias_analogos"
+              }
+            },
+            "Property": "temperatura_2m_max"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "5cf35e36a310c126100d",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_dias_analogos"
+              }
+            },
+            "Property": "temperatura_2m_min"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "89e45976c039a8fa2b38",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_dias_analogos"
+              }
+            },
+            "Property": "precipitacao_total"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "ca0185602bbf43d05ec8",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "vw_dias_analogos"
+              }
+            },
+            "Property": "chuva_3_dias"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

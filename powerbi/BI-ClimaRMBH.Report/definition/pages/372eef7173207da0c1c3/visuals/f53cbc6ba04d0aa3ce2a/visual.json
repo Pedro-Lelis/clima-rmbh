@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "f53cbc6ba04d0aa3ce2a",
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0,
+    "height": 720,
+    "width": 200,
+    "tabOrder": 9000
+  },
+  "visualGroup": {
+    "displayName": "Lateral",
+    "groupMode": "ScaleMode"
+  }
+}

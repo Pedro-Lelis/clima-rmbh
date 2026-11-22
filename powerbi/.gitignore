@@ -1,0 +1,11 @@
+# Projeto do Power BI (.pbip): só a definição em texto entra no Git.
+# Cache com os dados importados e preferências locais da máquina
+**/.pbi/cache.abf
+**/.pbi/localSettings.json
+
+# Binários: o .pbip é a fonte; .pbix/.pbit carregam dados ou duplicam a definição
+*.pbix
+*.pbit
+
+# Backups locais do tema
+*_bkp_*.json

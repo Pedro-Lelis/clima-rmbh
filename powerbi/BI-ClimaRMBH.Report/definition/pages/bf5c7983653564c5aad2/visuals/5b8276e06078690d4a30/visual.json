@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "5b8276e06078690d4a30",
+  "position": {
+    "x": 11.818181818181817,
+    "y": 636.36363636363626,
+    "z": 4000,
+    "height": 63.636363636363633,
+    "width": 176.36363636363635,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Dados: Open-Meteo.com (CC BY 4.0) · reanálise ERA5 (Copernicus)",
+                    "textStyle": {
+                      "fontSize": "9pt",
+                      "color": "#64748b"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "parentGroupName": "0feaa3010a5313d91e34"
+}
